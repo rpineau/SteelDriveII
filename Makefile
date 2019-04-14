@@ -1,4 +1,4 @@
-# Makefile for libSestoSenso
+# Makefile for SteelDriveII
 
 CC = gcc
 CFLAGS = -fPIC -Wall -Wextra -O2 -g -DSB_LINUX_BUILD -I. -I./../../
@@ -6,9 +6,9 @@ CPPFLAGS = -fPIC -Wall -Wextra -O2 -g -DSB_LINUX_BUILD -I. -I./../../
 LDFLAGS = -shared -lstdc++
 RM = rm -f
 STRIP = strip
-TARGET_LIB = libSestoSenso.so
+TARGET_LIB = libSteelDriveII.so
 
-SRCS = main.cpp SestoSenso.cpp x2focuser.cpp
+SRCS = main.cpp SteelDriveII.cpp x2focuser.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 .PHONY: all

@@ -20,16 +20,22 @@
 CSteelDriveII::CSteelDriveII()
 {
     m_nTargetPos = 0;
-    m_nMinPosLimit = 0;
-    m_nMaxPosLimit = 2097152;
+    m_SteelDriveInfo.sName = "";
+    m_SteelDriveInfo.nPos = 0;
+    m_SteelDriveInfo.nState = STOPPED;
+    m_SteelDriveInfo.nLimit = 0;
+    m_SteelDriveInfo.nHoldCurrent = 0;
+    m_SteelDriveInfo.nMoveCurrent = 0;
+    
+    strncpy(m_szFirmwareVersion,"Not Available", SERIAL_BUFFER_SIZE);
+    
     m_bAbborted = false;
     m_pSerx = NULL;
-    m_bMoving = false;
     m_dTemperature = -100.0;
 
     cmdTimer.Reset();
 
-#ifdef SESTO_DEBUG
+#ifdef BS_DEBUG
 #if defined(SB_WIN_BUILD)
     m_sLogfilePath = getenv("HOMEDRIVE");
     m_sLogfilePath += getenv("HOMEPATH");
@@ -44,7 +50,7 @@ CSteelDriveII::CSteelDriveII()
     Logfile = fopen(m_sLogfilePath.c_str(), "w");
 #endif
 
-#if defined SESTO_DEBUG && SESTO_DEBUG >= 2
+#if defined BS_DEBUG && BS_DEBUG >= 2
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
@@ -56,7 +62,7 @@ CSteelDriveII::CSteelDriveII()
 
 CSteelDriveII::~CSteelDriveII()
 {
-#ifdef	SESTO_DEBUG
+#ifdef	BS_DEBUG
 	// Close LogFile
 	if (Logfile)
         fclose(Logfile);
@@ -65,12 +71,12 @@ CSteelDriveII::~CSteelDriveII()
 
 int CSteelDriveII::Connect(const char *pszPort)
 {
-    int nErr = SENSO_OK;
+    int nErr = BS_OK;
 
     if(!m_pSerx)
         return ERR_COMMNOLINK;
 
-#ifdef SESTO_DEBUG
+#ifdef BS_DEBUG
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
@@ -85,7 +91,7 @@ int CSteelDriveII::Connect(const char *pszPort)
         m_bIsConnected = false;
 
     if(!m_bIsConnected) {
-#ifdef SESTO_DEBUG
+#ifdef BS_DEBUG
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
@@ -94,7 +100,7 @@ int CSteelDriveII::Connect(const char *pszPort)
 #endif
         return nErr;
     }
-#ifdef SESTO_DEBUG
+#ifdef BS_DEBUG
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
@@ -104,12 +110,10 @@ int CSteelDriveII::Connect(const char *pszPort)
 
     disableCRC();
 
-    nErr = getFirmwareVersion(m_szFirmwareVersion, SERIAL_BUFFER_SIZE);
+    // nErr = getFirmwareVersion(m_szFirmwareVersion, SERIAL_BUFFER_SIZE);
+    nErr = getInfo();
     if(nErr)
         nErr = ERR_COMMNOLINK;
-
-    nErr = getCurrentValues();
-    nErr |= getSpeedValues();
 
     cmdTimer.Reset();
 
@@ -122,7 +126,6 @@ void CSteelDriveII::Disconnect()
         m_pSerx->close();
 
 	m_bIsConnected = false;
-    m_bMoving = false;
 }
 
 
@@ -136,7 +139,7 @@ int CSteelDriveII::haltFocuser()
 		return ERR_COMMNOLINK;
 
     // abort
-    nErr = SteelDriveIICommand("STOP", szResp, SERIAL_BUFFER_SIZE);
+    nErr = SteelDriveIICommand("$BS STOP\n", szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
     if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
@@ -145,7 +148,6 @@ int CSteelDriveII::haltFocuser()
         }
 
         m_bAbborted = true;
-        m_bMoving = false;
     }
     return nErr;
 }
@@ -159,41 +161,29 @@ int CSteelDriveII::gotoPosition(int nPos)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
 
-#if defined SESTO_DEBUG && SESTO_DEBUG >= 2
+#if defined BS_DEBUG && BS_DEBUG >= 2
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
     fprintf(Logfile, "[%s] [CSteelDriveII::gotoPosition] moving to %d\n", timestamp, nPos);
-    fprintf(Logfile, "[%s] [CSteelDriveII::gotoPosition] m_nMinPosLimit =  %d\n", timestamp, m_nMinPosLimit);
-    fprintf(Logfile, "[%s] [CSteelDriveII::gotoPosition] m_nMaxPosLimit = %d\n", timestamp, m_nMaxPosLimit);
+    fprintf(Logfile, "[%s] [CSteelDriveII::gotoPosition] m_nMaxPosLimit = %d\n", timestamp, m_SteelDriveInfo.nLimit);
     fflush(Logfile);
 #endif
 
-    if ( nPos < m_nMinPosLimit || nPos > m_nMaxPosLimit)
+    if ( nPos > m_SteelDriveInfo.nLimit)
         return ERR_LIMITSEXCEEDED;
 
-    sprintf(szCmd,"GO %d", nPos);
+    sprintf(szCmd,"$BS GO %d\n", nPos);
     nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
-    // goto return the current position
-    m_bMoving = true;
-    if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-        if(!strstr(szResp, "OK")) {
-            m_nCurPos = atoi(szResp);
-#if defined SESTO_DEBUG && SESTO_DEBUG >= 2
-            ltime = time(NULL);
-            timestamp = asctime(localtime(&ltime));
-            timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(Logfile, "[%s] [CSteelDriveII::gotoPosition] m_nCurPos = %d\n", timestamp, m_nCurPos);
-            fflush(Logfile);
-#endif
-        }
 
+    if(strstr(szResp, "ERROR"))
+        return ERR_CMDFAILED;
+
+    // goto return the current position
+    if(strlen(szResp)) {
         m_nTargetPos = nPos;
     }
 
@@ -209,11 +199,8 @@ int CSteelDriveII::moveRelativeToPosision(int nSteps)
     if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
 
-#if defined SESTO_DEBUG && SESTO_DEBUG >= 2
+#if defined BS_DEBUG && BS_DEBUG >= 2
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
@@ -221,7 +208,7 @@ int CSteelDriveII::moveRelativeToPosision(int nSteps)
     fflush(Logfile);
 #endif
 
-    m_nTargetPos = m_nCurPos + nSteps;
+    m_nTargetPos = m_SteelDriveInfo.nPos + nSteps;
     nErr = gotoPosition(m_nTargetPos);
 
     return nErr;
@@ -231,44 +218,27 @@ int CSteelDriveII::moveRelativeToPosision(int nSteps)
 
 int CSteelDriveII::isGoToComplete(bool &bComplete)
 {
-    int nErr = SENSO_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
+    int nErr = BS_OK;
 
 
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
     bComplete = false;
-
+    getInfo();
+    // we ignore the errors
+    
     if(m_bAbborted) {
         bComplete = true;
-        m_nTargetPos = m_nCurPos;
+        m_nTargetPos = m_SteelDriveInfo.nPos;
         m_bAbborted = false;
     }
-    else if(m_bMoving) {
-        nErr = readResponse(szResp, SERIAL_BUFFER_SIZE);
-        if(nErr)
-            return nErr;
-        if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-            if(strstr(szResp, "OK")) {
-                m_bMoving = false;
-                bComplete = true;
-                getPosition(m_nCurPos);
-            }
-            else {
-                if(strlen(szResp))
-                    m_nCurPos = atoi(szResp);
-            }
-        }
-    }
-    else {
-        getPosition(m_nCurPos);
 
-        if(m_nCurPos == m_nTargetPos)
-            bComplete = true;
-        else
-            bComplete = false;
-    }
+    if(m_SteelDriveInfo.nPos == m_nTargetPos)
+        bComplete = true;
+    else
+        bComplete = false;
+
     return nErr;
 }
 
@@ -277,17 +247,13 @@ int CSteelDriveII::isGoToComplete(bool &bComplete)
 
 int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
 {
-    int nErr = SENSO_OK;
+    int nErr = BS_OK;
 
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-    if(m_bMoving) {
-        strncpy(pszVersion, m_szFirmwareVersion, nStrMaxLen);
-        return nErr;
-    }
-
-    nErr = getInfo();
+    strncpy(pszVersion, m_szFirmwareVersion, nStrMaxLen);
+    return nErr;
 
     return nErr;
 }
@@ -295,16 +261,32 @@ int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
 int CSteelDriveII::getInfo()
 {
 
-    int nErr = SENSO_OK;
+    int nErr = BS_OK;
     char szResp[SERIAL_BUFFER_SIZE];
     std::vector<std::string> svFields;
-
+    std::vector<std::string> svField;
     if(!m_bIsConnected)
         return ERR_COMMNOLINK;
 
-    nErr = SteelDriveIICommand("INFO", szResp, SERIAL_BUFFER_SIZE);
+#if defined BS_DEBUG && BS_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CSteelDriveII::getInfo]\n", timestamp);
+    fflush(Logfile);
+#endif
+
+    nErr = SteelDriveIICommand("$BS INFO\n", szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
+
+#if defined BS_DEBUG && BS_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CSteelDriveII::getInfo] szResp = '%s'\n", timestamp, szResp);
+    fflush(Logfile);
+#endif
 
     // parse info
     nErr = parseFields(szResp, svFields, ';');
@@ -313,79 +295,123 @@ int CSteelDriveII::getInfo()
     if(svFields.size()<4)
         return ERR_CMDFAILED;
 
-    m_SteelDriveInfo.sName = svFields[0];
-    m_SteelDriveInfo.nPos = std::stoi(svFields[1]);
-    m_SteelDriveInfo.nState = std::stoi(svFields[2]);
-    m_SteelDriveInfo.nLimit = std::stoi(svFields[3]);
+    nErr = parseFields(svFields[0], svField, ':');
+    if(svField.size()>1)
+        m_SteelDriveInfo.sName = svField[1];
+
+    nErr = parseFields(svFields[1], svField, ':');
+    if(svField.size()>1)
+        m_SteelDriveInfo.nPos = std::stoi(svField[1]);
+
+    //nErr = parseFields(svFields[2], svField, ':');
+    //if(svField.size()>1)
+    //    m_SteelDriveInfo.nState = svField[1];
+
+    nErr = parseFields(svFields[3], svField, ':');
+    if(svField.size()>1)
+        m_SteelDriveInfo.nLimit = std::stoi(svField[1]);
 
     return nErr;
 }
 
 int CSteelDriveII::getDeviceName(char *pzName, int nStrMaxLen)
 {
-    int nErr = SENSO_OK;
+    int nErr = BS_OK;
     char szResp[SERIAL_BUFFER_SIZE];
-    std::vector<std::string> vFieldsData;
     std::vector<std::string> vNameField;
 
     if(!m_bIsConnected)
         return ERR_COMMNOLINK;
 
-    if(m_bMoving)
-        return nErr;
+#if defined BS_DEBUG && BS_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CSteelDriveII::getDeviceName]\n", timestamp);
+    fflush(Logfile);
+#endif
 
-    if(m_bMoving) {
-        strncpy(pzName, m_szDeviceName, SERIAL_BUFFER_SIZE);
-        return nErr;
-    }
-
-    nErr = SteelDriveIICommand("#QN!", szResp, SERIAL_BUFFER_SIZE);
+    nErr = SteelDriveIICommand("$BS GET NAME\n", szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
 
-    if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-        nErr = parseFields(szResp, vFieldsData, ';');
-        if(nErr)
-            return nErr;
-        if(vFieldsData.size()==2) { // name is in 2nd field
-            nErr = parseFields(vFieldsData[1].c_str(), vNameField, '!');
+    if(strstr(szResp, "ERROR"))
+        return ERR_CMDFAILED;
+
+    
+#if defined BS_DEBUG && BS_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CSteelDriveII::getDeviceName] szResp = '%s'\n", timestamp, szResp);
+    fflush(Logfile);
+#endif
+
+    if(strlen(szResp)) {
+            nErr = parseFields(szResp, vNameField, ':');
             if(nErr)
                 return nErr;
+        if(vNameField.size()>1) {
+            strncpy(pzName, vNameField[1].c_str(), nStrMaxLen);
+            m_SteelDriveInfo.sName = vNameField[1];
         }
-        strncpy(pzName, vNameField[0].c_str(), nStrMaxLen);
-        strncpy(m_szDeviceName, pzName, SERIAL_BUFFER_SIZE);
+
+#if defined BS_DEBUG && BS_DEBUG >= 2
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(Logfile, "[%s] [CSteelDriveII::getDeviceName] pzName = '%s'\n", timestamp, pzName);
+        fflush(Logfile);
+#endif
     }
     return nErr;
 }
 
 int CSteelDriveII::getTemperature(double &dTemperature)
 {
-    int nErr = SENSO_OK;
+    int nErr = BS_OK;
     char szResp[SERIAL_BUFFER_SIZE];
+    std::vector<std::string> vFieldsData;
+    std::vector<std::string> vNameField;
 
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-    if(m_bMoving) {
-        dTemperature = m_dTemperature;
-        return nErr;
-    }
-    nErr = SteelDriveIICommand("#QT!", szResp, SERIAL_BUFFER_SIZE);
+    nErr = SteelDriveIICommand("$BS GET TEMP0\n", szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
+
+    if(strstr(szResp, "ERROR"))
+        return ERR_CMDFAILED;
+
     if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-        // convert response
-        dTemperature = atof(szResp);
-        m_dTemperature = dTemperature;
+        nErr = parseFields(szResp, vFieldsData, ':');
+        if(nErr)
+            return nErr;
+        if(vFieldsData.size()>1) { // temp is in 2nd field
+            dTemperature = std::stof(vFieldsData[1]);
+            if(dTemperature == -128.0f) {
+                m_dTemperature = -100.0f;
+                dTemperature = -100.0f;
+            }
+            else
+                m_dTemperature = dTemperature;
+        }
     }
+#if defined BS_DEBUG && BS_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CSteelDriveII::getTemperature] m_dTemperature = %3.2f\n", timestamp, m_dTemperature);
+    fflush(Logfile);
+#endif
+
     return nErr;
 }
 
 int CSteelDriveII::getPosition(int &nPosition)
 {
-	int nErr = SENSO_OK;
-	char szResp[SERIAL_BUFFER_SIZE];
-	std::vector<std::string> svFieldsData;
+	int nErr = BS_OK;
 
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
@@ -393,26 +419,26 @@ int CSteelDriveII::getPosition(int &nPosition)
 
     // let's not hammer the controller
     if(cmdTimer.GetElapsedSeconds() < 0.1f) {
-        nPosition = m_nCurPos;
+        nPosition = m_SteelDriveInfo.nPos;
         return nErr;
     }
     cmdTimer.Reset();
 
-    nErr = SteelDriveIICommand("GET POSITION", szResp, SERIAL_BUFFER_SIZE);
-    if(nErr)
-        return nErr;
-
-    // convert response
-	nErr = parseFields(szResp, svFieldsData, ';');
-	if(nErr)
-		return nErr;
-	
-
-#if defined SESTO_DEBUG && SESTO_DEBUG >= 2
+#if defined BS_DEBUG && BS_DEBUG >= 2
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CSteelDriveII::getPosition] [NOT Moving] m_nCurPos = %d \n", timestamp, m_nCurPos);
+    fprintf(Logfile, "[%s] [CSteelDriveII::getPosition]\n", timestamp);
+    fflush(Logfile);
+#endif
+    getInfo();
+    nPosition = m_SteelDriveInfo.nPos;
+    
+#if defined BS_DEBUG && BS_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CSteelDriveII::getPosition]  m_nCurPos = %d \n", timestamp, m_SteelDriveInfo.nPos);
     fflush(Logfile);
 #endif
     return nErr;
@@ -421,346 +447,89 @@ int CSteelDriveII::getPosition(int &nPosition)
 
 int CSteelDriveII::syncMotorPosition(const int &nPos)
 {
-    int nErr = SENSO_OK;
+    int nErr = BS_OK;
     char szCmd[SERIAL_BUFFER_SIZE];
     char szResp[SERIAL_BUFFER_SIZE];
 
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
-
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, "#SP%d!", nPos);
+    
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET POSITION:%d\n", nPos);
     nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
-    if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-        if(!strstr(szResp, "OK"))
-            nErr = ERR_CMDFAILED;
 
-        m_nCurPos = nPos;
-    }
+    if(strstr(szResp, "ERROR"))
+        return ERR_CMDFAILED;
+
+    m_SteelDriveInfo.nPos = nPos;
     return nErr;
 }
 
 
 int CSteelDriveII::getMaxPosLimit(int &nLimit)
 {
-    int nErr = SENSO_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-    std::vector<std::string> vFieldsData;
+    int nErr = BS_OK;
 
     if(!m_bIsConnected)
         return ERR_COMMNOLINK;
 
-    nLimit = m_nMaxPosLimit;
-
-    if(m_bMoving) {
-        return nErr;
-    }
-
-    nErr = SteelDriveIICommand("#QM!", szResp, SERIAL_BUFFER_SIZE);
+    nErr = getInfo();
     if(nErr)
         return nErr;
-
-    if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-        // convert response
-        nErr = parseFields(szResp, vFieldsData, ';');
-        if(nErr)
-            return nErr;
-        if(vFieldsData.size()>=2) {
-            nLimit = atoi(vFieldsData[1].c_str());
-            m_nMaxPosLimit = nLimit;
-        }
-        else
-            nErr = ERR_CMDFAILED;
-    }
+    
+    nLimit = m_SteelDriveInfo.nLimit;
 
     return nErr;
 }
 
 int CSteelDriveII::setMaxPosLimit(const int &nLimit)
 {
-    int nErr = SENSO_OK;
+    int nErr = BS_OK;
     char szCmd[SERIAL_BUFFER_SIZE];
     char szResp[SERIAL_BUFFER_SIZE];
 
     if(!m_bIsConnected)
         return ERR_COMMNOLINK;
 
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
-
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, "#SM;%d!", nLimit);
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET LIMIT:%d!", nLimit);
     nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
 
-    if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-        if(!strstr(szResp, "OK"))
-            nErr = ERR_CMDFAILED;
-        else
-            m_nMaxPosLimit = nLimit;
+    if(strstr(szResp, "ERROR"))
+        return ERR_CMDFAILED;
+
+    if(strlen(szResp)) {
+            m_SteelDriveInfo.nLimit = nLimit;
     }
 
     return nErr;
 }
 
-int CSteelDriveII::getMinPosLimit(int &nLimit)
-{
-    int nErr = SENSO_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-    std::vector<std::string> vFieldsData;
 
-    if(!m_bIsConnected)
-        return ERR_COMMNOLINK;
-
-    nLimit = m_nMinPosLimit;
-
-    if(m_bMoving) {
-        return nErr;
-    }
-
-    nErr = SteelDriveIICommand("#Qm!", szResp, SERIAL_BUFFER_SIZE);
-    if(nErr)
-        return nErr;
-    if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-        // convert response
-        nErr = parseFields(szResp, vFieldsData, ';');
-        if(nErr)
-            return nErr;
-        if(vFieldsData.size()>=2) {
-            nLimit = atoi(vFieldsData[1].c_str());
-            m_nMinPosLimit = nLimit;
-        }
-        else
-            nErr = ERR_CMDFAILED;
-    }
-
-    return nErr;
-}
-
-int CSteelDriveII::setMinPosLimit(const int &nLimit)
-{
-    int nErr = SENSO_OK;
-    char szCmd[SERIAL_BUFFER_SIZE];
-    char szResp[SERIAL_BUFFER_SIZE];
-
-
-    if(!m_bIsConnected)
-        return ERR_COMMNOLINK;
-
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
-
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, "#Sm;%d!", nLimit);
-    nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
-    if(nErr)
-        return nErr;
-
-    if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-        if(!strstr(szResp, "OK"))
-            nErr = ERR_CMDFAILED;
-        else
-            m_nMinPosLimit = nLimit;
-    }
-    return nErr;
-}
 
 int CSteelDriveII::setCurrentPosAsMax()
 {
-    int nErr = SENSO_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-
+    int nErr = BS_OK;
 
     if(!m_bIsConnected)
         return ERR_COMMNOLINK;
 
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
-
-    nErr = SteelDriveIICommand("#SM!", szResp, SERIAL_BUFFER_SIZE);
-    if(nErr)
-        return nErr;
-    if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-        if(!strstr(szResp, "OK"))
-            nErr = ERR_CMDFAILED;
-    }
+    setMaxPosLimit(m_SteelDriveInfo.nPos);
     return nErr;
 }
 
 // Current
 void CSteelDriveII::getHoldCurrent(int &nValue)
 {
-    nValue = m_SensoParams.nHoldCurrent;
+    nValue = m_SteelDriveInfo.nHoldCurrent;
 }
 
 void CSteelDriveII::setHoldCurrent(const int &nValue)
 {
-    m_SensoParams.nHoldCurrent = nValue;
-}
-
-void CSteelDriveII::getRunCurrent(int &nValue)
-{
-    nValue = m_SensoParams.nRunCurrent;
-}
-
-void CSteelDriveII::setRunCurrent(const int &nValue)
-{
-    m_SensoParams.nRunCurrent = nValue;
-}
-
-void CSteelDriveII::getAccCurrent(int &nValue)
-{
-    nValue = m_SensoParams.nAccCurrent;
-}
-
-void CSteelDriveII::setAccCurrent(const int &nValue)
-{
-    m_SensoParams.nAccCurrent = nValue;
-}
-
-void CSteelDriveII::getDecCurrent(int &nValue)
-{
-    nValue = m_SensoParams.nDecCurrent;
-}
-
-void CSteelDriveII::setDecCurrent(const int &nValue)
-{
-    m_SensoParams.nDecCurrent = nValue;
-}
-
-// Sppeds
-void CSteelDriveII::getRunSpeed(int &nValue)
-{
-    nValue = m_SensoParams.nRunSpeed;
-}
-
-void CSteelDriveII::setRunSpeed(const int &nValue)
-{
-    m_SensoParams.nRunSpeed = nValue;
-}
-
-void CSteelDriveII::getAccSpeed(int &nValue)
-{
-    nValue = m_SensoParams.nAccSpeed;
-}
-
-void CSteelDriveII::setAccSpeed(const int &nValue)
-{
-    m_SensoParams.nAccSpeed = nValue;
-}
-
-void CSteelDriveII::getDecSpeed(int &nValue)
-{
-    nValue = m_SensoParams.nDecSpeed;
-}
-
-void CSteelDriveII::setDecSpeed(const int &nValue)
-{
-    m_SensoParams.nDecSpeed = nValue;
-}
-
-int CSteelDriveII::readParams(void)
-{
-    int nErr = SENSO_OK;
-
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
-
-    nErr = getCurrentValues();
-    nErr |= getSpeedValues();
-
-    return nErr;
-}
-
-int CSteelDriveII::saveParams(void)
-{
-    int nErr = SENSO_OK;
-
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
-
-    nErr = setCurrentValues();
-    nErr |= setSpeedValues();
-
-    return nErr;
-}
-
-int CSteelDriveII::saveParamsToMemory(void)
-{
-    int nErr = SENSO_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
-
-    // save params to memory
-    m_pSleeper->sleep(250); // make sure the controller is ready for us as it tends to fail otherwize
-    nErr = SteelDriveIICommand("#PS!", szResp, SERIAL_BUFFER_SIZE);
-    if(nErr)
-        return nErr;
-
-    if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-        if(!strstr(szResp, "OK")) {
-            return ERR_CMDFAILED;
-        }
-    }
-    return nErr;
-}
-
-int CSteelDriveII::resetToDefault(void)
-{
-    int nErr = SENSO_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
-
-    // reset to default
-    nErr = SteelDriveIICommand("#PD!", szResp, SERIAL_BUFFER_SIZE);
-    if(nErr)
-        return nErr;
-
-    if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-        if(!strstr(szResp, "OK")) {
-            return ERR_CMDFAILED;
-        }
-    }
-    nErr = getCurrentValues();
-    nErr |= getSpeedValues();
-    return nErr;
-}
-
-int CSteelDriveII::setLockMode(const bool &bLock)
-{
-    int nErr = SENSO_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
-
-    if(bLock){
-        // set to free as we're no longer controlling the focuser.
-        nErr = SteelDriveIICommand("#MF!", szResp, SERIAL_BUFFER_SIZE);
-
-    }
-    else {
-        // set to free as we're no longer controlling the focuser.
-        nErr = SteelDriveIICommand("#MF!", szResp, SERIAL_BUFFER_SIZE);
-    }
-
-    return nErr;
+    m_SteelDriveInfo.nHoldCurrent = nValue;
 }
 
 
@@ -768,18 +537,22 @@ int CSteelDriveII::setLockMode(const bool &bLock)
 
 int CSteelDriveII::disableCRC()
 {
-    int nErr = SENSO_OK;
+    int nErr = BS_OK;
     char szResp[SERIAL_BUFFER_SIZE];
-
-    SteelDriveIICommand("CRC_DISABLE*00", szResp, SERIAL_BUFFER_SIZE);
+    SteelDriveIICommand("$BS CRC_DISABLE*00\n", szResp, SERIAL_BUFFER_SIZE);
+    if(strstr(szResp, "ERROR"))
+        return ERR_CMDFAILED;
     return nErr;
 }
 
 int CSteelDriveII::SteelDriveIICommand(const char *pszszCmd, char *pszResult, int nResultMaxLen)
 {
-    int nErr = SENSO_OK;
+    int nErr = BS_OK;
     char szResp[SERIAL_BUFFER_SIZE];
     unsigned long  ulBytesWrite;
+    std::string sTmp;
+    std::string sEcho;
+    std::string sResp;
 
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
@@ -788,13 +561,16 @@ int CSteelDriveII::SteelDriveIICommand(const char *pszszCmd, char *pszResult, in
 
     m_pSerx->purgeTxRx();
 
-#if defined SESTO_DEBUG && SESTO_DEBUG >= 3
+#if defined BS_DEBUG && BS_DEBUG >= 3
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand Sending %s\n", timestamp, pszszCmd);
+	fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand Sending '%s'\n", timestamp, pszszCmd);
 	fflush(Logfile);
 #endif
+
+    sTmp.assign(pszszCmd);
+    sTmp = trim(sTmp," \n\r");
 
     nErr = m_pSerx->writeFile((void *)pszszCmd, strlen(pszszCmd), ulBytesWrite);
     m_pSerx->flushTx();
@@ -802,12 +578,19 @@ int CSteelDriveII::SteelDriveIICommand(const char *pszszCmd, char *pszResult, in
     if(nErr){
         return nErr;
     }
-
+    // read command echo
+    nErr = readResponse(szResp, SERIAL_BUFFER_SIZE);
+    sEcho.assign(szResp);
+    sEcho = trim(sEcho," \n\r");
     if(pszResult) {
+        sResp = "";
+        while(sResp.size()==0) {
             // read response
             nErr = readResponse(szResp, SERIAL_BUFFER_SIZE);
+            sResp.assign(szResp);
+            sResp = trim(sResp," \r\n");
             if(nErr){
-#if defined SESTO_DEBUG && SESTO_DEBUG >= 2
+#if defined BS_DEBUG && BS_DEBUG >= 2
                 ltime = time(NULL);
                 timestamp = asctime(localtime(&ltime));
                 timestamp[strlen(timestamp) - 1] = 0;
@@ -816,24 +599,27 @@ int CSteelDriveII::SteelDriveIICommand(const char *pszszCmd, char *pszResult, in
 #endif
                 return nErr;
             }
-#if defined SESTO_DEBUG && SESTO_DEBUG >= 3
+#if defined BS_DEBUG && BS_DEBUG >= 3
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand response \"%s\"\n", timestamp, szResp);
+            fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand response '%s'\n", timestamp, szResp);
             fflush(Logfile);
 #endif
+        }
 
         // copy response(s) to result string
-        strncpy(pszResult, szResp, nResultMaxLen);
+        strncpy(pszResult, sResp.c_str(), nResultMaxLen);
     }
+
+    m_pSerx->purgeTxRx();   // purge data we don't want.
 
     return nErr;
 }
 
 int CSteelDriveII::readResponse(char *pszRespBuffer, int nBufferLen)
 {
-    int nErr = SENSO_OK;
+    int nErr = BS_OK;
     unsigned long ulBytesRead = 0;
     unsigned long ulTotalBytesRead = 0;
     char *pszBufPtr;
@@ -847,7 +633,7 @@ int CSteelDriveII::readResponse(char *pszRespBuffer, int nBufferLen)
     do {
         nErr = m_pSerx->readFile(pszBufPtr, 1, ulBytesRead, MAX_TIMEOUT);
         if(nErr) {
-#if defined SESTO_DEBUG && SESTO_DEBUG >= 2
+#if defined BS_DEBUG && BS_DEBUG >= 2
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
@@ -858,7 +644,7 @@ int CSteelDriveII::readResponse(char *pszRespBuffer, int nBufferLen)
         }
 
         if (ulBytesRead !=1) {// timeout
-#if defined SESTO_DEBUG && SESTO_DEBUG >= 2
+#if defined BS_DEBUG && BS_DEBUG >= 2
 			ltime = time(NULL);
 			timestamp = asctime(localtime(&ltime));
 			timestamp[strlen(timestamp) - 1] = 0;
@@ -869,12 +655,7 @@ int CSteelDriveII::readResponse(char *pszRespBuffer, int nBufferLen)
             break;
         }
         ulTotalBytesRead += ulBytesRead;
-        // special case
-        if (*pszBufPtr == '!') {
-            pszBufPtr++;
-            break;
-        }
-    } while (*pszBufPtr++ != '\r' && ulTotalBytesRead < nBufferLen );
+    } while (*pszBufPtr++ != '\n' && ulTotalBytesRead < nBufferLen );
 
     if(ulTotalBytesRead)
         *(pszBufPtr-1) = 0; //remove the \n or the !
@@ -885,126 +666,48 @@ int CSteelDriveII::readResponse(char *pszRespBuffer, int nBufferLen)
 
 int CSteelDriveII::parseFields(const char *pszIn, std::vector<std::string> &svFields, char cSeparator)
 {
-    int nErr = SENSO_OK;
-    std::string sSegment;
-    std::stringstream ssTmp(pszIn);
+    int nErr = BS_OK;
+    std::string sIn(pszIn);
+    
+    nErr = parseFields(sIn, svFields, cSeparator);
+    
+    return nErr;
+}
 
+int CSteelDriveII::parseFields(std::string sIn, std::vector<std::string> &svFields, char cSeparator)
+{
+    int nErr = BS_OK;
+    std::string sSegment;
+    std::stringstream ssTmp(sIn);
+    
     svFields.clear();
     // split the string into vector elements
     while(std::getline(ssTmp, sSegment, cSeparator))
     {
         svFields.push_back(sSegment);
     }
-
+    
     if(svFields.size()==0) {
         nErr = ERR_BADFORMAT;
     }
     return nErr;
 }
 
-#pragma mark parameters command
 
-int CSteelDriveII::getCurrentValues(void)
+std::string& CSteelDriveII::trim(std::string &str, const std::string& filter )
 {
-    int nErr = SENSO_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-    std::vector<std::string> vFieldsData;
-
-    if(!m_bIsConnected)
-        return ERR_COMMNOLINK;
-
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
-
-    nErr = SteelDriveIICommand("#GC!", szResp, SERIAL_BUFFER_SIZE);
-    if(nErr)
-        return nErr;
-
-    nErr = parseFields(szResp, vFieldsData, ';');
-    if(nErr)
-        return nErr;
-    if(vFieldsData.size()>=5) {
-        m_SensoParams.nHoldCurrent = atoi(vFieldsData[1].c_str());
-        m_SensoParams.nRunCurrent = atoi(vFieldsData[2].c_str());
-        m_SensoParams.nAccCurrent = atoi(vFieldsData[3].c_str());
-        m_SensoParams.nDecCurrent = atoi(vFieldsData[4].c_str());
-    }
-    return nErr;
+    return ltrim(rtrim(str, filter), filter);
 }
 
-int CSteelDriveII::getSpeedValues(void)
+std::string& CSteelDriveII::ltrim(std::string& str, const std::string& filter)
 {
-    int nErr = SENSO_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-    std::vector<std::string> vFieldsData;
-
-    if(!m_bIsConnected)
-        return ERR_COMMNOLINK;
-
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
-
-
-    nErr = SteelDriveIICommand("#GS!", szResp, SERIAL_BUFFER_SIZE);
-    if(nErr)
-        return nErr;
-
-    nErr = parseFields(szResp, vFieldsData, ';');
-    if(nErr)
-        return nErr;
-    if(vFieldsData.size()>=4) {
-        m_SensoParams.nAccSpeed = atoi(vFieldsData[1].c_str());
-        m_SensoParams.nRunSpeed = atoi(vFieldsData[2].c_str());
-        m_SensoParams.nDecSpeed = atoi(vFieldsData[3].c_str());
-    }
-    return nErr;
+    str.erase(0, str.find_first_not_of(filter));
+    return str;
 }
 
-int CSteelDriveII::setCurrentValues(void)
+std::string& CSteelDriveII::rtrim(std::string& str, const std::string& filter)
 {
-    int nErr = SENSO_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-    char szCmd[SERIAL_BUFFER_SIZE];
-
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
-
-    m_pSleeper->sleep(250); // make sure the controller is read as sometimes it can fails if to much traffic is sent.
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, "#SC;%d;%d;%d;%d!", m_SensoParams.nHoldCurrent,
-                                                            m_SensoParams.nRunCurrent,
-                                                            m_SensoParams.nAccCurrent,
-                                                            m_SensoParams.nDecCurrent );
-
-    nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
-    if(nErr)
-        return nErr;
-
-    if(!strstr(szResp, "OK"))
-        nErr = ERR_CMDFAILED;
-    return nErr;
+    str.erase(str.find_last_not_of(filter) + 1);
+    return str;
 }
 
-int CSteelDriveII::setSpeedValues(void)
-{
-    int nErr = SENSO_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-    char szCmd[SERIAL_BUFFER_SIZE];
-
-    if(m_bMoving) {
-        return ERR_CMD_IN_PROGRESS_FOC;
-    }
-
-    m_pSleeper->sleep(250);// make sure the controller is read as sometimes it can fails if to much traffic is sent.
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, "#SS;%d;%d;%d!",  m_SensoParams.nAccSpeed, m_SensoParams.nRunSpeed, m_SensoParams.nDecSpeed );
-    nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
-    if(nErr)
-        return nErr;
-
-    if(!strstr(szResp, "OK"))
-        nErr = ERR_CMDFAILED;
-
-    return nErr;
-}

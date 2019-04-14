@@ -2,9 +2,7 @@
 
 mkdir -p ROOT/tmp/SteelDriveII_X2/
 cp "../SteelDriveII.ui" ROOT/tmp/SteelDriveII_X2/
-cp "../SestoCalibrate.ui" ROOT/tmp/SteelDriveII_X2/
-cp "../PrimaLuceLab.png" ROOT/tmp/SteelDriveII_X2/
-cp "../focuserlist PrimaLuceLab.txt" ROOT/tmp/SteelDriveII_X2/
+cp "../focuserlist SteelDriveII.txt" ROOT/tmp/SteelDriveII_X2/
 cp "../build/Release/libSteelDriveII.dylib" ROOT/tmp/SteelDriveII_X2/
 
 if [ ! -z "$installer_signature" ]; then

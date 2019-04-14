@@ -202,37 +202,15 @@ int	X2Focuser::execModalSettingsDialog(void)
 
 	// set controls values
     if(m_bLinked) {
-        m_SteelDriveII.readParams();
 
         setMainDialogControlState(dx, true);
-
-        m_SteelDriveII.getAccCurrent(nTmp);
-        dx->setPropertyInt("accelerationCurrent", "value", nTmp);
-
-        m_SteelDriveII.getRunCurrent(nTmp);
-        dx->setPropertyInt("runCurrent", "value", nTmp);
-
-        m_SteelDriveII.getDecCurrent(nTmp);
-        dx->setPropertyInt("decCurrent", "value", nTmp);
 
         m_SteelDriveII.getHoldCurrent(nTmp);
         dx->setPropertyInt("holdCurrent", "value", nTmp);
 
-        m_SteelDriveII.getAccSpeed(nTmp);
-        dx->setPropertyInt("accelerationSpeed", "value", nTmp);
-
-        m_SteelDriveII.getRunSpeed(nTmp);
-        dx->setPropertyInt("runSpeed", "value", nTmp);
-
-        m_SteelDriveII.getDecSpeed(nTmp);
-        dx->setPropertyInt("decelerationSpeed", "value", nTmp);
-
         m_SteelDriveII.getPosition(m_nPosition);
         snprintf(szTmp, LOG_BUFFER_SIZE, "%d", m_nPosition);
         dx->setPropertyString("currentPos", "text", szTmp);
-
-        m_SteelDriveII.getMinPosLimit(nTmp);
-        dx->setPropertyInt("minPos", "value", nTmp);
 
         m_SteelDriveII.getMaxPosLimit(nTmp);
         dx->setPropertyInt("maxPos", "value", nTmp);
@@ -265,23 +243,8 @@ int	X2Focuser::execModalSettingsDialog(void)
     if (bPressedOK) {
         // read current values
         dx->propertyInt("accelerationCurrent", "value", nTmp);
-        m_SteelDriveII.setAccCurrent(nTmp);
-        dx->propertyInt("runCurrent", "value", nTmp);
-        m_SteelDriveII.setRunCurrent(nTmp);
-        dx->propertyInt("decCurrent", "value", nTmp);
-        m_SteelDriveII.setDecCurrent(nTmp);
         dx->propertyInt("holdCurrent", "value", nTmp);
         m_SteelDriveII.setHoldCurrent(nTmp);
-
-        // read speed values
-        dx->propertyInt("accelerationSpeed", "value", nTmp);
-        m_SteelDriveII.setAccSpeed(nTmp);
-        dx->propertyInt("runSpeed", "value", nTmp);
-        m_SteelDriveII.setRunSpeed(nTmp);
-        dx->propertyInt("decelerationSpeed", "value", nTmp);
-        m_SteelDriveII.setDecSpeed(nTmp);
-
-        nErr = m_SteelDriveII.saveParams();
     }
     return nErr;
 }
@@ -292,52 +255,7 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
     int nTmp = 0;
     char szTmp[LOG_BUFFER_SIZE];
 
-    if (!strcmp(pszEvent, "on_pushButton_clicked")) {
-        uiex->setPropertyInt("accelerationCurrent", "value", 10);
-        uiex->setPropertyInt("runCurrent", "value", 10);
-        uiex->setPropertyInt("decCurrent", "value", 10);
-        uiex->setPropertyInt("holdCurrent", "value", 10);
-
-        uiex->setPropertyInt("accelerationSpeed", "value", 138);
-        uiex->setPropertyInt("runSpeed", "value", 65);
-        uiex->setPropertyInt("decelerationSpeed", "value", 138);
-    }
-
-    else if (!strcmp(pszEvent, "on_pushButton_2_clicked")) {
-        uiex->setPropertyInt("accelerationCurrent", "value", 15);
-        uiex->setPropertyInt("runCurrent", "value", 15);
-        uiex->setPropertyInt("decCurrent", "value", 15);
-        uiex->setPropertyInt("holdCurrent", "value", 15);
-
-        uiex->setPropertyInt("accelerationSpeed", "value", 70);
-        uiex->setPropertyInt("runSpeed", "value", 40);
-        uiex->setPropertyInt("decelerationSpeed", "value", 70);
-    }
-
-    else if (!strcmp(pszEvent, "on_pushButton_3_clicked")) {
-        uiex->setPropertyInt("accelerationCurrent", "value", 20);
-        uiex->setPropertyInt("runCurrent", "value", 20);
-        uiex->setPropertyInt("decCurrent", "value", 20);
-        uiex->setPropertyInt("holdCurrent", "value", 20);
-
-        uiex->setPropertyInt("accelerationSpeed", "value", 50);
-        uiex->setPropertyInt("runSpeed", "value", 25);
-        uiex->setPropertyInt("decelerationSpeed", "value", 50);
-    }
-
-    else if (!strcmp(pszEvent, "on_pushButton_4_clicked")) {
-        m_SteelDriveII.getPosition(m_nPosition);
-        snprintf(szTmp, LOG_BUFFER_SIZE, "%d", m_nPosition);
-        uiex->setPropertyString("currentPos", "text", szTmp);
-        m_SteelDriveII.setMaxPosLimit(m_nPosition);
-    }
-
-    else if (!strcmp(pszEvent, "on_pushButton_5_clicked")) {
-        uiex->propertyInt("minPos", "value", nTmp);
-        m_SteelDriveII.setMinPosLimit(nTmp);
-    }
-
-    else if (!strcmp(pszEvent, "on_pushButton_6_clicked")) {
+    if (!strcmp(pszEvent, "on_pushButton_6_clicked")) {
         uiex->propertyInt("maxPos", "value", nTmp);
         m_SteelDriveII.setMaxPosLimit(nTmp);
     }
@@ -347,87 +265,11 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
         m_SteelDriveII.syncMotorPosition(nTmp);
         snprintf(szTmp, LOG_BUFFER_SIZE, "%d", nTmp);
         uiex->setPropertyString("currentPos", "text", szTmp);
-        m_SteelDriveII.getPosition(m_nPosition);
     }
 
     else if (!strcmp(pszEvent, "on_pushButton_8_clicked")) {
-        // read current values (I assume they are in mA).
-        uiex->propertyInt("accelerationCurrent", "value", nTmp);
-        m_SteelDriveII.setAccCurrent(nTmp);
-        uiex->propertyInt("runCurrent", "value", nTmp);
-        m_SteelDriveII.setRunCurrent(nTmp);
-        uiex->propertyInt("decCurrent", "value", nTmp);
-        m_SteelDriveII.setDecCurrent(nTmp);
         uiex->propertyInt("holdCurrent", "value", nTmp);
         m_SteelDriveII.setHoldCurrent(nTmp);
-        // read speed values
-        uiex->propertyInt("accelerationSpeed", "value", nTmp);
-        m_SteelDriveII.setAccSpeed(nTmp);
-        uiex->propertyInt("runSpeed", "value", nTmp);
-        m_SteelDriveII.setRunSpeed(nTmp);
-        uiex->propertyInt("decelerationSpeed", "value", nTmp);
-        m_SteelDriveII.setDecSpeed(nTmp);
-        // write new values
-        nErr = m_SteelDriveII.saveParams();
-        // premanentely save to memory
-        nErr = m_SteelDriveII.saveParamsToMemory();
-    }
-
-    else if (!strcmp(pszEvent, "on_pushButton_9_clicked")) {
-        m_SteelDriveII.resetToDefault();
-        // reset all fields
-        m_SteelDriveII.getAccCurrent(nTmp);
-        uiex->setPropertyInt("accelerationCurrent", "value", nTmp);
-
-        m_SteelDriveII.getRunCurrent(nTmp);
-        uiex->setPropertyInt("runCurrent", "value", nTmp);
-
-        m_SteelDriveII.getDecCurrent(nTmp);
-        uiex->setPropertyInt("decCurrent", "value", nTmp);
-
-        m_SteelDriveII.getHoldCurrent(nTmp);
-        uiex->setPropertyInt("holdCurrent", "value", nTmp);
-
-        m_SteelDriveII.getAccSpeed(nTmp);
-        uiex->setPropertyInt("accelerationSpeed", "value", nTmp);
-
-        m_SteelDriveII.getRunSpeed(nTmp);
-        uiex->setPropertyInt("runSpeed", "value", nTmp);
-
-        m_SteelDriveII.getDecSpeed(nTmp);
-        uiex->setPropertyInt("decelerationSpeed", "value", nTmp);
-
-        m_SteelDriveII.getPosition(nTmp);
-        m_nPosition = nTmp;
-        snprintf(szTmp, LOG_BUFFER_SIZE, "%d", m_nPosition);
-        uiex->setPropertyString("currentPos", "text", szTmp);
-
-        m_SteelDriveII.getMinPosLimit(nTmp);
-        uiex->setPropertyInt("minPos", "value", nTmp);
-
-        m_SteelDriveII.getMaxPosLimit(nTmp);
-        uiex->setPropertyInt("maxPos", "value", nTmp);
-
-        uiex->setPropertyInt("newPos", "value", m_nPosition);
-    }
-
-    else if (!strcmp(pszEvent, "on_pushButton_10_clicked")) {
-        setMainDialogControlState(uiex, false);
-        setMainDialogControlState(uiex, true);
-
-        // re-read the data and set the values for min/max/current
-        m_SteelDriveII.getPosition(m_nPosition);
-        snprintf(szTmp, LOG_BUFFER_SIZE, "%d", m_nPosition);
-        uiex->setPropertyString("currentPos", "text", szTmp);
-
-        m_SteelDriveII.getMinPosLimit(nTmp);
-        uiex->setPropertyInt("minPos", "value", nTmp);
-
-        m_SteelDriveII.getMaxPosLimit(nTmp);
-        uiex->setPropertyInt("maxPos", "value", nTmp);
-
-        uiex->setPropertyInt("newPos", "value", m_nPosition);
-
     }
 }
 
@@ -479,7 +321,7 @@ int	X2Focuser::focMinimumLimit(int& nMinLimit)
     int nErr = SB_OK;
 
     X2MutexLocker ml(GetMutex());
-    nErr = m_SteelDriveII.getMinPosLimit(nMinLimit);
+    nMinLimit = 0;
 
     return nErr;
 }

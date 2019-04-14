@@ -25,21 +25,22 @@
 
 #include "StopWatch.h"
 
-// #define SESTO_DEBUG 3
+#define BS_DEBUG 3
 
 #define MAX_TIMEOUT 1000
 #define SERIAL_BUFFER_SIZE 256
 #define LOG_BUFFER_SIZE 256
 
-enum SENSO_Errors    {SENSO_OK = 0, NOT_CONNECTED, ND_CANT_CONNECT, SENSO_BAD_CMD_RESPONSE, COMMAND_FAILED};
-enum MotorStatus    {IDLE = 0, MOVING};
-enum CalibrationSteps   {MANUAL_RACK_IN = 0, RACK_IN, SET_MIN, RACK_OUT, SET_MAX, CAL_DONE};
+enum BS_Errors    {BS_OK = 0, NOT_CONNECTED, ND_CANT_CONNECT, BS_BAD_CMD_RESPONSE, COMMAND_FAILED};
+enum MotorStatus    {STOPPED = 0, ZEROED, GOING_UP, GOING_DOWN};
 
 typedef struct {
     std::string     sName;
     int             nPos;
     int             nState;
     int             nLimit;
+    int             nHoldCurrent;
+    int             nMoveCurrent;
 } SteelDriveInfo;
 
 class CSteelDriveII
@@ -75,8 +76,6 @@ public:
 
     int         syncMotorPosition(const int &nPos);
 
-    int         getMinPosLimit(int &nLimit);
-    int         setMinPosLimit(const int &nLimit);
     int         getMaxPosLimit(int &nLimit);
     int         setMaxPosLimit(const int &nLimit);
     int         setCurrentPosAsMax();
@@ -84,38 +83,16 @@ public:
     void        getHoldCurrent(int &nValue);
     void        setHoldCurrent(const int &nValue);
 
-    void        getRunCurrent(int &nValue);
-    void        setRunCurrent(const int &nValue);
-
-    void        getAccCurrent(int &nValue);
-    void        setAccCurrent(const int &nValue);
-
-    void        getDecCurrent(int &nValue);
-    void        setDecCurrent(const int &nValue);
-
-    void        getRunSpeed(int &nValue);
-    void        setRunSpeed(const int &nValue);
-
-    void        getAccSpeed(int &nValue);
-    void        setAccSpeed(const int &nValue);
-
-    void        getDecSpeed(int &nValue);
-    void        setDecSpeed(const int &nValue);
-
-
-    int         readParams(void);
-    int         saveParams(void);
-    int         saveParamsToMemory(void);
-    int         resetToDefault(void);
-
-    int         setLockMode(const bool &bLock);
 
 protected:
 
     int             SteelDriveIICommand(const char *pszCmd, char *pszResult, int nResultMaxLen);
     int             readResponse(char *pszRespBuffer, int nBufferLen);
     int             parseFields(const char *pszIn, std::vector<std::string> &svFields, char cSeparator);
-
+    int             parseFields(std::string sIn, std::vector<std::string> &svFields, char cSeparator);
+    std::string&    trim(std::string &str, const std::string &filter );
+    std::string&    ltrim(std::string &str, const std::string &filter);
+    std::string&    rtrim(std::string &str, const std::string &filter);
     int             disableCRC();
 
 
@@ -127,20 +104,18 @@ protected:
     char            m_szFirmwareVersion[SERIAL_BUFFER_SIZE];
     char            m_szLogBuffer[LOG_BUFFER_SIZE];
 
-    int             m_nCurPos;
+    // int             m_nCurPos;
     int             m_nTargetPos;
-    int             m_nMinPosLimit;
-    int             m_nMaxPosLimit;
 	bool			m_bAbborted;
-    bool            m_bMoving;
+    // bool            m_bMoving;
 
     float           m_dTemperature;
-    char            m_szDeviceName[SERIAL_BUFFER_SIZE];
+    // char            m_szDeviceName[SERIAL_BUFFER_SIZE];
 
     SteelDriveInfo     m_SteelDriveInfo;
     CStopWatch      cmdTimer;
 
-#ifdef SESTO_DEBUG
+#ifdef BS_DEBUG
     std::string m_sLogfilePath;
     // timestamp for logs
     char *timestamp;
