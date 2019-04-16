@@ -23,13 +23,14 @@ X2Focuser::X2Focuser(const char* pszDisplayName,
 	m_bLinked = false;
 	m_nPosition = 0;
     m_fLastTemp = -273.15f; // aboslute zero :)
+	m_nTempSource = 0; // focuser
 
     // Read in settings
     if (m_pIniUtil) {
+		m_nTempSource = m_pIniUtil->readInt(PARENT_KEY, TEMP_SOURCE, 0); // default to focuser
     }
 	m_SteelDriveII.SetSerxPointer(m_pSerX);
     m_SteelDriveII.SetSleeperPointer(m_pSleeper);
-
 }
 
 X2Focuser::~X2Focuser()
@@ -205,7 +206,7 @@ int	X2Focuser::execModalSettingsDialog(void)
 
         setMainDialogControlState(dx, true);
 
-        m_SteelDriveII.getHoldCurrent(nTmp);
+        m_SteelDriveII.getCurrentHold(nTmp);
         dx->setPropertyInt("holdCurrent", "value", nTmp);
 
         m_SteelDriveII.getPosition(m_nPosition);
@@ -244,7 +245,10 @@ int	X2Focuser::execModalSettingsDialog(void)
         // read current values
         dx->propertyInt("accelerationCurrent", "value", nTmp);
         dx->propertyInt("holdCurrent", "value", nTmp);
-        m_SteelDriveII.setHoldCurrent(nTmp);
+        m_SteelDriveII.setCurrentHold(nTmp);
+		if(m_pIniUtil) {
+			nErr = m_pIniUtil->writeInt(PARENT_KEY, TEMP_SOURCE, m_nTempSource);
+		}
     }
     return nErr;
 }
@@ -262,14 +266,14 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 
     else if (!strcmp(pszEvent, "on_pushButton_7_clicked")) {
         uiex->propertyInt("newPos", "value", nTmp);
-        m_SteelDriveII.syncMotorPosition(nTmp);
+        m_SteelDriveII.setPosition(nTmp);
         snprintf(szTmp, LOG_BUFFER_SIZE, "%d", nTmp);
         uiex->setPropertyString("currentPos", "text", szTmp);
     }
 
     else if (!strcmp(pszEvent, "on_pushButton_8_clicked")) {
         uiex->propertyInt("holdCurrent", "value", nTmp);
-        m_SteelDriveII.setHoldCurrent(nTmp);
+        m_SteelDriveII.setCurrentHold(nTmp);
     }
 }
 
@@ -432,7 +436,7 @@ int X2Focuser::focTemperature(double &dTemperature)
 
     if(timer.GetElapsedSeconds() > 30.0f || m_fLastTemp < -99.0f) {
         X2MutexLocker ml(GetMutex());
-        nErr = m_SteelDriveII.getTemperature(m_fLastTemp);
+        nErr = m_SteelDriveII.getTemperature(m_nTempSource, m_fLastTemp);
         timer.Reset();
     }
 

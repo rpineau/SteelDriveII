@@ -32,15 +32,11 @@
 #define LOG_BUFFER_SIZE 256
 
 enum BS_Errors    {BS_OK = 0, NOT_CONNECTED, ND_CANT_CONNECT, BS_BAD_CMD_RESPONSE, COMMAND_FAILED};
-enum MotorStatus    {STOPPED = 0, ZEROED, GOING_UP, GOING_DOWN};
-
+enum TempSourses	{FOCUSER = 0, CONTROLLER, BOTH};
 typedef struct {
     std::string     sName;
     int             nPos;
-    int             nState;
     int             nLimit;
-    int             nHoldCurrent;
-    int             nMoveCurrent;
 } SteelDriveInfo;
 
 class CSteelDriveII
@@ -49,54 +45,71 @@ public:
     CSteelDriveII();
     ~CSteelDriveII();
 
-    int         Connect(const char *pszPort);
-    void        Disconnect(void);
-    bool        IsConnected(void) { return m_bIsConnected; }
+    int		Connect(const char *pszPort);
+    void	Disconnect(void);
+    bool	IsConnected(void) { return m_bIsConnected; }
 
-    void        SetSerxPointer(SerXInterface *p) { m_pSerx = p; }
-    void        SetSleeperPointer(SleeperInterface *pSleeper) {m_pSleeper = pSleeper;}
+    void	SetSerxPointer(SerXInterface *p) { m_pSerx = p; }
+    void	SetSleeperPointer(SleeperInterface *pSleeper) {m_pSleeper = pSleeper;}
     // move commands
-    int         haltFocuser();
-    int         gotoPosition(int nPos);
-    int         moveRelativeToPosision(int nSteps);
+    int		haltFocuser();
+    int		gotoPosition(int nPos);
+    int		moveRelativeToPosision(int nSteps);
 
     // command complete functions
-    int         isGoToComplete(bool &bComplete);
+    int		isGoToComplete(bool &bComplete);
 
     // getter and setter
-    void        setDebugLog(bool bEnable) {m_bDebugLog = bEnable; };
+    void	setDebugLog(bool bEnable) {m_bDebugLog = bEnable; };
 
-    int         getFirmwareVersion(char *pszVersion, int nStrMaxLen);
-    int         getInfo(void);
-    int         getDeviceName(char *pzName, int nStrMaxLen);
+    int		getFirmwareVersion(char *pszVersion, int nStrMaxLen);
+    int		getInfo(void);
+    int		getDeviceName(char *pzName, int nStrMaxLen);
 
-    int         getTemperature(double &dTemperature);
+	int		getTemperatureFromSource(int nSource, double &dTemperature);
+    int		getTemperature(int nSource, double &dTemperature);
 
-    int         getPosition(int &nPosition);
+    int		getPosition(int &nPosition);
+	int		setPosition(const int &nPosition);
 
-    int         syncMotorPosition(const int &nPos);
+    int		getMaxPosLimit(int &nLimit);
+    int		setMaxPosLimit(const int &nLimit);
+    int		setCurrentPosAsMax();
 
-    int         getMaxPosLimit(int &nLimit);
-    int         setMaxPosLimit(const int &nLimit);
-    int         setCurrentPosAsMax();
+	int		getUseEndStop(bool &bEnable);
+	int		setUseEndStop(const bool &bEnable);
 
-    void        getHoldCurrent(int &nValue);
-    void        setHoldCurrent(const int &nValue);
+	int		Zeroing();
+
+	int		getJogSteps(int &nStep);
+	int		setJogSteps(const int &nStep);
+
+	int		getSingleStep(int &nStep);
+	int		setSingleStep(const int &nStep);
+
+	int		getCurrentMove(int &nValue);
+	int		setCurrentMove(const int &nValue);
+
+	int		getCurrentHold(int &nValue);
+	int		setCurrentHold(const int &nValue);
+
+	int		getRCX(const char cChannel, int &nValue);
+	int		setRCX(const char cChannel,const int &nValue);
 
 
 protected:
 
-    int             SteelDriveIICommand(const char *pszCmd, char *pszResult, int nResultMaxLen);
-    int             readResponse(char *pszRespBuffer, int nBufferLen);
-    int             parseFields(const char *pszIn, std::vector<std::string> &svFields, char cSeparator);
-    int             parseFields(std::string sIn, std::vector<std::string> &svFields, char cSeparator);
-    std::string&    trim(std::string &str, const std::string &filter );
-    std::string&    ltrim(std::string &str, const std::string &filter);
-    std::string&    rtrim(std::string &str, const std::string &filter);
-    int             disableCRC();
+    int				SteelDriveIICommand(const char *pszCmd, char *pszResult, int nResultMaxLen);
+    int				readResponse(char *pszRespBuffer, int nBufferLen);
+    int				parseFields(const char *pszIn, std::vector<std::string> &svFields, char cSeparator);
+    int				parseFields(std::string sIn, std::vector<std::string> &svFields, char cSeparator);
+    std::string&	trim(std::string &str, const std::string &filter );
+    std::string&	ltrim(std::string &str, const std::string &filter);
+    std::string&	rtrim(std::string &str, const std::string &filter);
+    int				disableCRC();
 
 
-    SerXInterface   *m_pSerx;
+    SerXInterface   	*m_pSerx;
     SleeperInterface    *m_pSleeper;
 
     bool            m_bDebugLog;
@@ -104,23 +117,17 @@ protected:
     char            m_szFirmwareVersion[SERIAL_BUFFER_SIZE];
     char            m_szLogBuffer[LOG_BUFFER_SIZE];
 
-    // int             m_nCurPos;
     int             m_nTargetPos;
 	bool			m_bAbborted;
-    // bool            m_bMoving;
 
-    float           m_dTemperature;
-    // char            m_szDeviceName[SERIAL_BUFFER_SIZE];
-
-    SteelDriveInfo     m_SteelDriveInfo;
-    CStopWatch      cmdTimer;
+    SteelDriveInfo	m_SteelDriveInfo;
+    CStopWatch		cmdTimer;
 
 #ifdef BS_DEBUG
-    std::string m_sLogfilePath;
-    // timestamp for logs
-    char *timestamp;
-    time_t ltime;
-    FILE *Logfile;      // LogFile
+    std::string		m_sLogfilePath;
+    char			*timestamp;
+    time_t			ltime;
+    FILE			*Logfile;
 #endif
 
 };

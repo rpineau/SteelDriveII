@@ -38,8 +38,7 @@ class TickCountInterface;
 
 #define PARENT_KEY			"SteelDriveII"
 #define CHILD_KEY_PORTNAME	"PortName"
-#define POS_LIMIT           "PosLimit"
-#define POS_LIMIT_ENABLED   "PosLimitEnable"
+#define TEMP_SOURCE          "TempSource"
 
 #if defined(SB_WIN_BUILD)
 #define DEF_PORT_NAME					"COM1"
@@ -179,7 +178,7 @@ private:
     int                                     m_nCalibrationStep;
     SerXInterface::Parity                   m_nParity;
     int                                     m_nCurrentDialog;
-
+	int										m_nTempSource;
 };
 
 

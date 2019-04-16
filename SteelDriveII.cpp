@@ -20,18 +20,15 @@
 CSteelDriveII::CSteelDriveII()
 {
     m_nTargetPos = 0;
+
     m_SteelDriveInfo.sName = "";
     m_SteelDriveInfo.nPos = 0;
-    m_SteelDriveInfo.nState = STOPPED;
     m_SteelDriveInfo.nLimit = 0;
-    m_SteelDriveInfo.nHoldCurrent = 0;
-    m_SteelDriveInfo.nMoveCurrent = 0;
-    
-    strncpy(m_szFirmwareVersion,"Not Available", SERIAL_BUFFER_SIZE);
+
+	strncpy(m_szFirmwareVersion,"Not Available", SERIAL_BUFFER_SIZE);
     
     m_bAbborted = false;
     m_pSerx = NULL;
-    m_dTemperature = -100.0;
 
     cmdTimer.Reset();
 
@@ -129,7 +126,7 @@ void CSteelDriveII::Disconnect()
 }
 
 
-#pragma mark move commands
+#pragma mark - move commands
 int CSteelDriveII::haltFocuser()
 {
     int nErr;
@@ -214,7 +211,7 @@ int CSteelDriveII::moveRelativeToPosision(int nSteps)
     return nErr;
 }
 
-#pragma mark command complete functions
+#pragma mark - command complete functions
 
 int CSteelDriveII::isGoToComplete(bool &bComplete)
 {
@@ -243,8 +240,7 @@ int CSteelDriveII::isGoToComplete(bool &bComplete)
 }
 
 
-#pragma mark getters and setters
-
+#pragma mark - device info
 int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
 {
     int nErr = BS_OK;
@@ -367,48 +363,88 @@ int CSteelDriveII::getDeviceName(char *pzName, int nStrMaxLen)
     return nErr;
 }
 
-int CSteelDriveII::getTemperature(double &dTemperature)
+int CSteelDriveII::getTemperature(int nSource, double &dTemperature)
 {
-    int nErr = BS_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-    std::vector<std::string> vFieldsData;
-    std::vector<std::string> vNameField;
+	int nErr = SB_OK;
+	double dT1,dT2;
+	int nbValidSource = 0;
+	dTemperature = 0;
+	switch(nSource) {
+		case FOCUSER:
+		case CONTROLLER:
+			nErr = getTemperatureFromSource(nSource, dTemperature);
+			break;
+		case BOTH:
+			nErr = getTemperatureFromSource(FOCUSER, dT1);
+			nErr = getTemperatureFromSource(CONTROLLER, dT2);
+			if(dT1 != -100.0f) {
+				dTemperature += dT1;
+				nbValidSource ++;
+			}
+			if(dT2 != -100.0f) {
+				dTemperature += dT2;
+				nbValidSource ++;
+			}
+			if(nbValidSource)
+				dTemperature /= nbValidSource;
+			else
+				dTemperature = -100.0f;
+			break;
+		default :
+			dTemperature = -100;
+			nErr = ERR_UNKNOWNCMD;
+	}
+	return nErr;
+}
+
+int CSteelDriveII::getTemperatureFromSource(int nSource, double &dTemperature)
+{
+	int nErr = SB_OK;
+
+	char szResp[SERIAL_BUFFER_SIZE];
+	char szCmd[SERIAL_BUFFER_SIZE];
+
+	std::vector<std::string> vFieldsData;
+	std::vector<std::string> vNameField;
 
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-    nErr = SteelDriveIICommand("$BS GET TEMP0\n", szResp, SERIAL_BUFFER_SIZE);
-    if(nErr)
-        return nErr;
+	// 0 = focuser, 1 = controller
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "BS GET TEMP%d\n", nSource);
 
-    if(strstr(szResp, "ERROR"))
-        return ERR_CMDFAILED;
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
 
-    if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-        nErr = parseFields(szResp, vFieldsData, ':');
-        if(nErr)
-            return nErr;
-        if(vFieldsData.size()>1) { // temp is in 2nd field
-            dTemperature = std::stof(vFieldsData[1]);
-            if(dTemperature == -128.0f) {
-                m_dTemperature = -100.0f;
-                dTemperature = -100.0f;
-            }
-            else
-                m_dTemperature = dTemperature;
-        }
-    }
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // temp is in 2nd field
+			dTemperature = std::stof(vFieldsData[1]);
+			if(dTemperature == -128.0f) {
+				dTemperature = -100.0f;
+			}
+		}
+	}
 #if defined BS_DEBUG && BS_DEBUG >= 2
-    ltime = time(NULL);
-    timestamp = asctime(localtime(&ltime));
-    timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CSteelDriveII::getTemperature] m_dTemperature = %3.2f\n", timestamp, m_dTemperature);
-    fflush(Logfile);
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getTemperature] dTemperature = %3.2f\n", timestamp, dTemperature);
+	fflush(Logfile);
 #endif
 
-    return nErr;
+	return nErr;
 }
 
+
+
+#pragma mark - position commands
 int CSteelDriveII::getPosition(int &nPosition)
 {
 	int nErr = BS_OK;
@@ -444,9 +480,9 @@ int CSteelDriveII::getPosition(int &nPosition)
     return nErr;
 }
 
-
-int CSteelDriveII::syncMotorPosition(const int &nPos)
+int CSteelDriveII::setPosition(const int &nPosition)
 {
+
     int nErr = BS_OK;
     char szCmd[SERIAL_BUFFER_SIZE];
     char szResp[SERIAL_BUFFER_SIZE];
@@ -455,7 +491,7 @@ int CSteelDriveII::syncMotorPosition(const int &nPos)
 		return ERR_COMMNOLINK;
 
     
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET POSITION:%d\n", nPos);
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET POSITION:%d\n", nPosition);
     nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
@@ -463,7 +499,7 @@ int CSteelDriveII::syncMotorPosition(const int &nPos)
     if(strstr(szResp, "ERROR"))
         return ERR_CMDFAILED;
 
-    m_SteelDriveInfo.nPos = nPos;
+    m_SteelDriveInfo.nPos = nPosition;
     return nErr;
 }
 
@@ -517,23 +553,372 @@ int CSteelDriveII::setCurrentPosAsMax()
     if(!m_bIsConnected)
         return ERR_COMMNOLINK;
 
-    setMaxPosLimit(m_SteelDriveInfo.nPos);
+	setMaxPosLimit(m_SteelDriveInfo.nPos);
     return nErr;
 }
 
-// Current
-void CSteelDriveII::getHoldCurrent(int &nValue)
+int CSteelDriveII::getUseEndStop(bool &bEnable)
 {
-    nValue = m_SteelDriveInfo.nHoldCurrent;
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	bEnable = false;
+	nErr = SteelDriveIICommand("$BS GET USE_ENDSTOP\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			bEnable = (vFieldsData[1] == "1");
+		}
+	}
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getUseEndStop] bEnable = %s\n", timestamp, bEnable?"Yes":"No");
+	fflush(Logfile);
+#endif
+
+	return nErr;
 }
 
-void CSteelDriveII::setHoldCurrent(const int &nValue)
+int CSteelDriveII::setUseEndStop(const bool &bEnable)
 {
-    m_SteelDriveInfo.nHoldCurrent = nValue;
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET USE_ENDSTOP:%s\n", bEnable?"1":"0");
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+int CSteelDriveII::Zeroing()
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	nErr = SteelDriveIICommand("$BS ZEROING\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
 }
 
 
-#pragma mark command and response functions
+#pragma mark - steps commands
+
+int CSteelDriveII::getJogSteps(int &nStep)
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	nErr = SteelDriveIICommand("$BS GET JOGSTEPS\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			nStep = std::stoi(vFieldsData[1]);
+		}
+	}
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getJogSteps] nStep = %d\n", timestamp, nStep);
+	fflush(Logfile);
+#endif
+
+	return nErr;
+}
+
+int CSteelDriveII::setJogSteps(const int &nStep)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET JOGSTEPS:%d\n", nStep);
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+int CSteelDriveII::getSingleStep(int &nStep)
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	nErr = SteelDriveIICommand("$BS GET SINGLESTEPS\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			nStep = std::stoi(vFieldsData[1]);
+		}
+	}
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getSingleStep] nStep = %d\n", timestamp, nStep);
+	fflush(Logfile);
+#endif
+
+	return nErr;
+}
+
+int CSteelDriveII::setSingleStep(const int &nStep)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET SINGLESTEPS:%d\n", nStep);
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+
+#pragma mark - current commands
+
+int CSteelDriveII::getCurrentMove(int &nValue)
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	nErr = SteelDriveIICommand("$BS GET CURRENT_MOVE\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			nValue = std::stoi(vFieldsData[1]);
+		}
+	}
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getCurrentMove] nValue = %d\n", timestamp, nValue);
+	fflush(Logfile);
+#endif
+
+	return nErr;
+}
+
+int CSteelDriveII::setCurrentMove(const int &nValue)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET CURRENT_MOVE:%d\n", nValue);
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+
+
+int CSteelDriveII::getCurrentHold(int &nValue)
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	nErr = SteelDriveIICommand("$BS GET CURRENT_HOLD\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			nValue = std::stoi(vFieldsData[1]);
+		}
+	}
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getCurrentHold] nValue = %d\n", timestamp, nValue);
+	fflush(Logfile);
+#endif
+
+	return nErr;
+}
+
+int CSteelDriveII::setCurrentHold(const int &nValue)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET CURRENT_HOLD:%d\n", nValue);
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+int CSteelDriveII::getRCX(const char cChannel, int &nValue)
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	char szCmd[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS GET RC%c\n", cChannel);
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			nValue = std::stoi(vFieldsData[1]);
+		}
+	}
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getRCX] RC%c nValue = %d\n", timestamp, cChannel, nValue);
+	fflush(Logfile);
+#endif
+
+	return nErr;
+}
+
+int CSteelDriveII::setRCX(const char cChannel, const int &nValue)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET RC%c:%d\n", cChannel, nValue);
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+
+#pragma mark - command and response functions
 
 int CSteelDriveII::disableCRC()
 {
