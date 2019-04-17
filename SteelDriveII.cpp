@@ -529,7 +529,7 @@ int CSteelDriveII::setMaxPosLimit(const int &nLimit)
     if(!m_bIsConnected)
         return ERR_COMMNOLINK;
 
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET LIMIT:%d!", nLimit);
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET LIMIT:%d\n", nLimit);
     nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;

@@ -31,8 +31,9 @@
 #define SERIAL_BUFFER_SIZE 256
 #define LOG_BUFFER_SIZE 256
 
-enum BS_Errors    {BS_OK = 0, NOT_CONNECTED, ND_CANT_CONNECT, BS_BAD_CMD_RESPONSE, COMMAND_FAILED};
+enum BS_Errors		{BS_OK = 0, NOT_CONNECTED, ND_CANT_CONNECT, BS_BAD_CMD_RESPONSE, COMMAND_FAILED};
 enum TempSourses	{FOCUSER = 0, CONTROLLER, BOTH};
+
 typedef struct {
     std::string     sName;
     int             nPos;
