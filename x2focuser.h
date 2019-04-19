@@ -23,6 +23,7 @@
 
 #include "StopWatch.h"
 #include "SteelDriveII.h"
+#include "ui_def.h"
 
 // Forward declare the interfaces that this device is dependent upon
 class SerXInterface;

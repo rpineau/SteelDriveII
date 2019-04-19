@@ -14,6 +14,7 @@
 		933E14261EDCA6B90044D947 /* main.h in Headers */ = {isa = PBXBuildFile; fileRef = 933E14221EDCA6B90044D947 /* main.h */; };
 		933E14271EDCA6B90044D947 /* x2focuser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 933E14231EDCA6B90044D947 /* x2focuser.cpp */; };
 		933E14281EDCA6B90044D947 /* x2focuser.h in Headers */ = {isa = PBXBuildFile; fileRef = 933E14241EDCA6B90044D947 /* x2focuser.h */; };
+		9396549C226A33A7003E4910 /* ui_def.h in Headers */ = {isa = PBXBuildFile; fileRef = 9396549B226A33A7003E4910 /* ui_def.h */; };
 		939F4F2D1EE1EE6300E26EED /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 939F4F2C1EE1EE6300E26EED /* IOKit.framework */; };
 		939F4F2F1EE1EE7200E26EED /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 939F4F2E1EE1EE7200E26EED /* CoreFoundation.framework */; };
 /* End PBXBuildFile section */
@@ -27,6 +28,7 @@
 		933E14221EDCA6B90044D947 /* main.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = main.h; sourceTree = "<group>"; };
 		933E14231EDCA6B90044D947 /* x2focuser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = x2focuser.cpp; sourceTree = "<group>"; };
 		933E14241EDCA6B90044D947 /* x2focuser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x2focuser.h; sourceTree = "<group>"; };
+		9396549B226A33A7003E4910 /* ui_def.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ui_def.h; sourceTree = "<group>"; };
 		939F4F2C1EE1EE6300E26EED /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		939F4F2E1EE1EE7200E26EED /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -64,6 +66,7 @@
 		933E14201EDCA6AC0044D947 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				9396549B226A33A7003E4910 /* ui_def.h */,
 				933A04311EE0BD5D00D06551 /* StopWatch.h */,
 				9306A75A1EDE325800A1E90B /* SteelDriveII.cpp */,
 				9306A75B1EDE325800A1E90B /* SteelDriveII.h */,
@@ -93,6 +96,7 @@
 			files = (
 				933E14281EDCA6B90044D947 /* x2focuser.h in Headers */,
 				933E14261EDCA6B90044D947 /* main.h in Headers */,
+				9396549C226A33A7003E4910 /* ui_def.h in Headers */,
 				933A04321EE0BD5D00D06551 /* StopWatch.h in Headers */,
 				9306A75D1EDE325800A1E90B /* SteelDriveII.h in Headers */,
 			);

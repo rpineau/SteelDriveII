@@ -394,6 +394,15 @@ int CSteelDriveII::getTemperature(int nSource, double &dTemperature)
 			dTemperature = -100;
 			nErr = ERR_UNKNOWNCMD;
 	}
+
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getTemperature] source TEMP%d dTemperature = %3.2f\n", timestamp, nSource, dTemperature);
+	fflush(Logfile);
+#endif
+
 	return nErr;
 }
 
@@ -435,7 +444,7 @@ int CSteelDriveII::getTemperatureFromSource(int nSource, double &dTemperature)
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(Logfile, "[%s] [CSteelDriveII::getTemperature] dTemperature = %3.2f\n", timestamp, dTemperature);
+	fprintf(Logfile, "[%s] [CSteelDriveII::getTemperatureFromSource] source TEMP%d dTemperature = %3.2f\n", timestamp, nSource, dTemperature);
 	fflush(Logfile);
 #endif
 

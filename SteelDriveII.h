@@ -1,9 +1,8 @@
 //
-//  dmfc.h
-//  NexDome
+//  SteelDriveII.h
 //
-//  Created by Rodolphe Pineau on 2017/05/30.
-//  NexDome X2 plugin
+//  Created by Rodolphe Pineau on 2019/04/01.
+//  SteelDrive II X2 plugin
 
 #ifndef __SteelDriveII__
 #define __SteelDriveII__
