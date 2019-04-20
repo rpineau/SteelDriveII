@@ -363,94 +363,6 @@ int CSteelDriveII::getDeviceName(char *pzName, int nStrMaxLen)
     return nErr;
 }
 
-int CSteelDriveII::getTemperature(int nSource, double &dTemperature)
-{
-	int nErr = SB_OK;
-	double dT1,dT2;
-	int nbValidSource = 0;
-	dTemperature = 0;
-	switch(nSource) {
-		case FOCUSER:
-		case CONTROLLER:
-			nErr = getTemperatureFromSource(nSource, dTemperature);
-			break;
-		case BOTH:
-			nErr = getTemperatureFromSource(FOCUSER, dT1);
-			nErr = getTemperatureFromSource(CONTROLLER, dT2);
-			if(dT1 != -100.0f) {
-				dTemperature += dT1;
-				nbValidSource ++;
-			}
-			if(dT2 != -100.0f) {
-				dTemperature += dT2;
-				nbValidSource ++;
-			}
-			if(nbValidSource)
-				dTemperature /= nbValidSource;
-			else
-				dTemperature = -100.0f;
-			break;
-		default :
-			dTemperature = -100;
-			nErr = ERR_UNKNOWNCMD;
-	}
-
-#if defined BS_DEBUG && BS_DEBUG >= 2
-	ltime = time(NULL);
-	timestamp = asctime(localtime(&ltime));
-	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(Logfile, "[%s] [CSteelDriveII::getTemperature] source TEMP%d dTemperature = %3.2f\n", timestamp, nSource, dTemperature);
-	fflush(Logfile);
-#endif
-
-	return nErr;
-}
-
-int CSteelDriveII::getTemperatureFromSource(int nSource, double &dTemperature)
-{
-	int nErr = SB_OK;
-
-	char szResp[SERIAL_BUFFER_SIZE];
-	char szCmd[SERIAL_BUFFER_SIZE];
-
-	std::vector<std::string> vFieldsData;
-	std::vector<std::string> vNameField;
-
-	if(!m_bIsConnected)
-		return ERR_COMMNOLINK;
-
-	// 0 = focuser, 1 = controller
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "BS GET TEMP%d\n", nSource);
-
-	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
-	if(nErr)
-		return nErr;
-
-	if(strstr(szResp, "ERROR"))
-		return ERR_CMDFAILED;
-
-	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
-		nErr = parseFields(szResp, vFieldsData, ':');
-		if(nErr)
-			return nErr;
-		if(vFieldsData.size()>1) { // temp is in 2nd field
-			dTemperature = std::stof(vFieldsData[1]);
-			if(dTemperature == -128.0f) {
-				dTemperature = -100.0f;
-			}
-		}
-	}
-#if defined BS_DEBUG && BS_DEBUG >= 2
-	ltime = time(NULL);
-	timestamp = asctime(localtime(&ltime));
-	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(Logfile, "[%s] [CSteelDriveII::getTemperatureFromSource] source TEMP%d dTemperature = %3.2f\n", timestamp, nSource, dTemperature);
-	fflush(Logfile);
-#endif
-
-	return nErr;
-}
-
 
 
 #pragma mark - position commands
@@ -926,6 +838,184 @@ int CSteelDriveII::setRCX(const char cChannel, const int &nValue)
 	return nErr;
 }
 
+#pragma mark - temperature commands
+
+int CSteelDriveII::getTemperature(int nSource, double &dTemperature)
+{
+	int nErr = SB_OK;
+	double dT1,dT2;
+	int nbValidSource = 0;
+	dTemperature = 0;
+	switch(nSource) {
+		case FOCUSER:
+		case CONTROLLER:
+			nErr = getTemperatureFromSource(nSource, dTemperature);
+			break;
+		case BOTH:
+			nErr = getTemperatureFromSource(FOCUSER, dT1);
+			nErr = getTemperatureFromSource(CONTROLLER, dT2);
+			if(dT1 != -100.0f) {
+				dTemperature += dT1;
+				nbValidSource ++;
+			}
+			if(dT2 != -100.0f) {
+				dTemperature += dT2;
+				nbValidSource ++;
+			}
+			if(nbValidSource)
+				dTemperature /= nbValidSource;
+			else
+				dTemperature = -100.0f;
+			break;
+		default :
+			dTemperature = -100;
+			nErr = ERR_UNKNOWNCMD;
+	}
+
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getTemperature] source TEMP%d dTemperature = %3.2f\n", timestamp, nSource, dTemperature);
+	fflush(Logfile);
+#endif
+
+	return nErr;
+}
+
+int CSteelDriveII::getTemperatureFromSource(int nSource, double &dTemperature)
+{
+	int nErr = SB_OK;
+
+	char szResp[SERIAL_BUFFER_SIZE];
+	char szCmd[SERIAL_BUFFER_SIZE];
+
+	std::vector<std::string> vFieldsData;
+	std::vector<std::string> vNameField;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	// 0 = focuser, 1 = controller
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "BS GET TEMP%d\n", nSource);
+
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // temp is in 2nd field
+			dTemperature = std::stof(vFieldsData[1]);
+			if(dTemperature == -128.0f) {
+				dTemperature = -100.0f;
+			}
+		}
+	}
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getTemperatureFromSource] source TEMP%d dTemperature = %3.2f\n", timestamp, nSource, dTemperature);
+	fflush(Logfile);
+#endif
+
+	return nErr;
+}
+
+
+int CSteelDriveII::enableTempComp(const bool &bEnable)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TCOMP:%s\n", bEnable?"1":"0");
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+int CSteelDriveII::isTempCompEnable(bool &bEnable)
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	bEnable = false;
+	nErr = SteelDriveIICommand("$BS GET TCOMP\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			bEnable = (vFieldsData[1] == "1");
+		}
+	}
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getUseEndStop] bEnable = %s\n", timestamp, bEnable?"Yes":"No");
+	fflush(Logfile);
+#endif
+
+	return nErr;
+}
+
+int CSteelDriveII::getTempCompSensorSource(int &nSource)
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	nErr = SteelDriveIICommand("$BS GET TCOMP_SENSOR\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			nSource = std::stoi(vFieldsData[1]);
+		}
+	}
+	return nErr;
+}
+
+int CSteelDriveII::setTempCompSensorSource(const int &nSource)
+{
+	int nErr = BS_OK;
+	return nErr;
+}
 
 #pragma mark - command and response functions
 

@@ -259,48 +259,173 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
     int nTmp = 0;
     char szTmp[LOG_BUFFER_SIZE];
 
-    if (!strcmp(pszEvent, "on_pushButton_6_clicked")) {
-        uiex->propertyInt("maxPos", "value", nTmp);
-        m_SteelDriveII.setMaxPosLimit(nTmp);
+	// Positions
+	if (!strcmp(pszEvent, SET_CURRENT_AS_MAX_CLICKED)) {
+		nErr = m_SteelDriveII.setCurrentPosAsMax();
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the current position as the maximum position : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
+	}
+
+	else if	(!strcmp(pszEvent, INITIATE_ZEROING_CLICKED)) {
+		nErr = m_SteelDriveII.Zeroing();
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error Zeroing focuser : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
+	}
+
+	else if	(!strcmp(pszEvent, SET_MAX_POS_CLICKED)) {
+		uiex->propertyInt("maxPos", "value", nTmp);
+		nErr = m_SteelDriveII.setMaxPosLimit(nTmp);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the maximum position : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
     }
 
-    else if (!strcmp(pszEvent, "on_pushButton_7_clicked")) {
+	else if (!strcmp(pszEvent, SYNC_TO_POS_CLICKED)) {
         uiex->propertyInt("newPos", "value", nTmp);
-        m_SteelDriveII.setPosition(nTmp);
-        snprintf(szTmp, LOG_BUFFER_SIZE, "%d", nTmp);
-        uiex->setPropertyString("currentPos", "text", szTmp);
+        nErr =  m_SteelDriveII.setPosition(nTmp);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the new position : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
+		else {
+        	snprintf(szTmp, LOG_BUFFER_SIZE, "%d", nTmp);
+        	uiex->setPropertyString("currentPos", "text", szTmp);
+		}
     }
 
-    else if (!strcmp(pszEvent, "on_pushButton_8_clicked")) {
+	else if	(!strcmp(pszEvent, USE_END_STOP_CLICKED)) {
+		nErr = m_SteelDriveII.setUseEndStop(uiex->isChecked(USE_END_STOP)==1?true:false);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error changing end stop use : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
+	}
+
+	// Expert settings
+	else if (!strcmp(pszEvent, SET_HOLD_CURRENT_CLICKED)) {
         uiex->propertyInt("holdCurrent", "value", nTmp);
-        m_SteelDriveII.setCurrentHold(nTmp);
+        nErr = m_SteelDriveII.setCurrentHold(nTmp);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the current hold value : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
     }
+
+	else if	(!strcmp(pszEvent, SET_MOVE_CURRENT_CLICKED)) {
+		uiex->propertyInt("moveCurrent", "value", nTmp);
+		nErr = m_SteelDriveII.setCurrentMove(nTmp);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the current move value : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
+	}
+
+	else if	(!strcmp(pszEvent, SET_RCA_TIMING_CLICKED)) {
+		uiex->propertyInt("RCATiming", "value", nTmp);
+		nErr = m_SteelDriveII.setRCX('A', nTmp);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the RCA timing value : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
+	}
+
+	else if	(!strcmp(pszEvent, SET_RCB_TIMING_CLICKED)) {
+		uiex->propertyInt("RCBTiming", "value", nTmp);
+		nErr = m_SteelDriveII.setRCX('B', nTmp);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the RCB timing value : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
+	}
+
+	// temperature settings
+	else if	(!strcmp(pszEvent, ENABLE_TEMP_COMP_CLICKED)) {
+		nErr = m_SteelDriveII.enableTempComp(uiex->isChecked(ENABLE_TEMP_COMP)==1?true:false);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error %s temperature compensation : %d", uiex->isChecked(ENABLE_TEMP_COMP)==1?"enabling":"disabling", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
+	}
+
+	else if	(!strcmp(pszEvent, SET_TEMP_SOURCE_FOC_CLICKED)) {
+	}
+
+	else if	(!strcmp(pszEvent, SET_TEMP_SOURCE_CTRL_CLICKED)) {
+	}
+
+	else if	(!strcmp(pszEvent, SET_TEMP_SOURCE_BOTH_CLICKED)) {
+	}
+
+	else if	(!strcmp(pszEvent, PAUSE_TEMP_COMP_CLICKED)) {
+	}
+
+	else if	(!strcmp(pszEvent, SET_TEMP_COMP_RATIO_CLICKED)) {
+	}
+
+	else if	(!strcmp(pszEvent, SET_TEMP_COMP_PERIOD_CLICKED)) {
+	}
+
+	else if	(!strcmp(pszEvent, SET_TEMP_COMP_DELTA_CLICKED)) {
+	}
+
+	else if	(!strcmp(pszEvent, SET_FOC_TEMP_OFFSET_CLICKED)) {
+	}
+
+	else if	(!strcmp(pszEvent, SET_CTRL_TEMP_OFFSET_CLICKED)) {
+	}
+
+	else if	(!strcmp(pszEvent, ENABLE_TEMP_PID_COMP_CLICKED)) {
+	}
+
+	else if	(!strcmp(pszEvent, SET_PID_TEMP_SOURCE_FOC_CLICKED)) {
+	}
+
+	else if	(!strcmp(pszEvent, SET_PID_TEMP_SOURCE_CTRL_CLICKED)) {
+	}
+
+	else if	(!strcmp(pszEvent, SET_PID_TEMP_SOURCE_BOTH_CLICKED)) {
+	}
+
+	else if	(!strcmp(pszEvent, SET_PWM_DEW_HEATER_CLICKED)) {
+	}
 }
 
 void X2Focuser::setMainDialogControlState(X2GUIExchangeInterface* uiex, bool enabled)
 {
 
-    uiex->setEnabled("pushButton", enabled);
-    uiex->setEnabled("pushButton_2", enabled);
-    uiex->setEnabled("pushButton_3", enabled);
-    uiex->setEnabled("pushButton_4", enabled);
-    uiex->setEnabled("pushButton_5", enabled);
-    uiex->setEnabled("pushButton_6", enabled);
-    uiex->setEnabled("pushButton_7", enabled);
-    uiex->setEnabled("pushButton_8", enabled);
-    uiex->setEnabled("pushButton_9", enabled);
-    uiex->setEnabled("pushButton_10", enabled);
-    uiex->setEnabled("accelerationCurrent", enabled);
-    uiex->setEnabled("runCurrent", enabled);
-    uiex->setEnabled("decCurrent", enabled);
-    uiex->setEnabled("holdCurrent", enabled);
-    uiex->setEnabled("accelerationSpeed", enabled);
-    uiex->setEnabled("runSpeed", enabled);
-    uiex->setEnabled("decelerationSpeed", enabled);
-    uiex->setEnabled("minPos", enabled);
-    uiex->setEnabled("maxPos", enabled);
-    uiex->setEnabled("newPos", enabled);
-    uiex->setEnabled("pushButtonOK", enabled);
+    uiex->setEnabled(SET_CURRENT_AS_MAX, enabled);
+	uiex->setEnabled(INITIATE_ZEROING, enabled);
+	uiex->setEnabled(SET_MAX_POS, enabled);
+	uiex->setEnabled(SYNC_TO_POS, enabled);
+	uiex->setEnabled(USE_END_STOP, enabled);
+
+	uiex->setEnabled(SET_HOLD_CURRENT, enabled);
+	uiex->setEnabled(SET_MOVE_CURRENT, enabled);
+	uiex->setEnabled(SET_RCA_TIMING, enabled);
+	uiex->setEnabled(SET_RCB_TIMING, enabled);
+
+	uiex->setEnabled(ENABLE_TEMP_COMP, enabled);
+	uiex->setEnabled(SET_TEMP_SOURCE_FOC, enabled);
+	uiex->setEnabled(SET_TEMP_SOURCE_CTRL, enabled);
+	uiex->setEnabled(SET_TEMP_SOURCE_BOTH, enabled);
+	uiex->setEnabled(PAUSE_TEMP_COMP, enabled);
+	uiex->setEnabled(SET_TEMP_COMP_RATIO, enabled);
+	uiex->setEnabled(SET_TEMP_COMP_PERIOD, enabled);
+	uiex->setEnabled(SET_TEMP_COMP_DELTA, enabled);
+	uiex->setEnabled(SET_FOC_TEMP_OFFSET, enabled);
+	uiex->setEnabled(SET_CTRL_TEMP_OFFSET, enabled);
+	uiex->setEnabled(ENABLE_TEMP_PID_COMP, enabled);
+	uiex->setEnabled(SET_PID_TEMP_SOURCE_FOC, enabled);
+	uiex->setEnabled(SET_PID_TEMP_SOURCE_CTRL, enabled);
+	uiex->setEnabled(SET_PID_TEMP_SOURCE_BOTH, enabled);
+	uiex->setEnabled(SET_PWM_DEW_HEATER, enabled);
+
+	uiex->setEnabled("pushButtonOK", enabled);
 }
 
 

@@ -66,9 +66,6 @@ public:
     int		getInfo(void);
     int		getDeviceName(char *pzName, int nStrMaxLen);
 
-	int		getTemperatureFromSource(int nSource, double &dTemperature);
-    int		getTemperature(int nSource, double &dTemperature);
-
     int		getPosition(int &nPosition);
 	int		setPosition(const int &nPosition);
 
@@ -96,6 +93,14 @@ public:
 	int		getRCX(const char cChannel, int &nValue);
 	int		setRCX(const char cChannel,const int &nValue);
 
+	int		getTemperatureFromSource(int nSource, double &dTemperature);
+	int		getTemperature(int nSource, double &dTemperature);
+
+	int		enableTempComp(const bool &bEnable);
+	int		isTempCompEnable(bool &bEnable);
+
+	int		getTempCompSensorSource(int &nSource);
+	int		setTempCompSensorSource(const int &nSource);
 
 protected:
 

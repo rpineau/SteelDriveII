@@ -131,7 +131,7 @@
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
-      <widget class="QSpinBox" name="holdCurrent_2">
+      <widget class="QSpinBox" name="moveCurrent">
        <property name="geometry">
         <rect>
          <x>160</x>
@@ -208,7 +208,7 @@
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
-      <widget class="QSpinBox" name="holdCurrent_3">
+      <widget class="QSpinBox" name="RCATiming">
        <property name="geometry">
         <rect>
          <x>160</x>
@@ -224,7 +224,7 @@
         <number>127</number>
        </property>
       </widget>
-      <widget class="QSpinBox" name="holdCurrent_4">
+      <widget class="QSpinBox" name="RCBTiming">
        <property name="geometry">
         <rect>
          <x>160</x>
@@ -801,7 +801,7 @@
         </property>
        </widget>
       </widget>
-      <widget class="QDoubleSpinBox" name="doubleSpinBox">
+      <widget class="QDoubleSpinBox" name="compFactor">
        <property name="geometry">
         <rect>
          <x>264</x>
@@ -823,7 +823,7 @@
         <double>0.100000000000000</double>
        </property>
       </widget>
-      <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+      <widget class="QDoubleSpinBox" name="compThreshold">
        <property name="geometry">
         <rect>
          <x>264</x>
@@ -845,7 +845,7 @@
         <double>0.100000000000000</double>
        </property>
       </widget>
-      <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
+      <widget class="QDoubleSpinBox" name="focTempOffset">
        <property name="geometry">
         <rect>
          <x>264</x>
@@ -867,7 +867,7 @@
         <double>0.100000000000000</double>
        </property>
       </widget>
-      <widget class="QSpinBox" name="spinBox">
+      <widget class="QSpinBox" name="compPeriod">
        <property name="geometry">
         <rect>
          <x>264</x>
@@ -883,7 +883,7 @@
         <number>300000</number>
        </property>
       </widget>
-      <widget class="QDoubleSpinBox" name="doubleSpinBox_5">
+      <widget class="QDoubleSpinBox" name="controllerTempOffset">
        <property name="geometry">
         <rect>
          <x>264</x>
@@ -986,7 +986,7 @@
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
-      <widget class="QSpinBox" name="holdCurrent_5">
+      <widget class="QSpinBox" name="PwmOutputPercent">
        <property name="geometry">
         <rect>
          <x>264</x>
@@ -1028,7 +1028,7 @@
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
-      <widget class="QDoubleSpinBox" name="doubleSpinBox_6">
+      <widget class="QDoubleSpinBox" name="PidTempTarget">
        <property name="geometry">
         <rect>
          <x>264</x>
