@@ -257,6 +257,7 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 {
     int nErr = SB_OK;
     int nTmp = 0;
+    double dTmp = 0.0f;
     char szTmp[LOG_BUFFER_SIZE];
 
 	// Positions
@@ -353,18 +354,44 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	}
 
 	else if	(!strcmp(pszEvent, SET_TEMP_SOURCE_FOC_CLICKED)) {
+        nErr = m_SteelDriveII.setTempCompSensorSource(FOCUSER);
+        if(nErr) {
+            snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting temp comp source to focuser sensor : %d",  nErr);
+            uiex->messageBox("Error", szTmp);
+        }
 	}
 
 	else if	(!strcmp(pszEvent, SET_TEMP_SOURCE_CTRL_CLICKED)) {
+        nErr = m_SteelDriveII.setTempCompSensorSource(CONTROLLER);
+        if(nErr) {
+            snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting temp comp source to controller sensor : %d",  nErr);
+            uiex->messageBox("Error", szTmp);
+        }
 	}
 
 	else if	(!strcmp(pszEvent, SET_TEMP_SOURCE_BOTH_CLICKED)) {
+        nErr = m_SteelDriveII.setTempCompSensorSource(BOTH);
+        if(nErr) {
+            snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting temp comp source to both sensor : %d",  nErr);
+            uiex->messageBox("Error", szTmp);
+        }
 	}
 
 	else if	(!strcmp(pszEvent, PAUSE_TEMP_COMP_CLICKED)) {
+        nErr = m_SteelDriveII.pauseTempComp(uiex->isChecked(ENABLE_TEMP_COMP)==1?true:false);
+        if(nErr) {
+            snprintf(szTmp, LOG_BUFFER_SIZE, "Error %s temperature compensation : %d", uiex->isChecked(ENABLE_TEMP_COMP)==1?"enabling":"disabling", nErr);
+            uiex->messageBox("Error", szTmp);
+        }
 	}
 
-	else if	(!strcmp(pszEvent, SET_TEMP_COMP_RATIO_CLICKED)) {
+	else if	(!strcmp(pszEvent, SET_TEMP_COMP_FACTOR_CLICKED)) {
+        uiex->propertyDouble("compFactor", "value", dTmp);
+        nErr = m_SteelDriveII.setTempCompFactor(dTmp);
+        if(nErr) {
+            snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the temperature comp factor : %d", nErr);
+            uiex->messageBox("Error", szTmp);
+        }
 	}
 
 	else if	(!strcmp(pszEvent, SET_TEMP_COMP_PERIOD_CLICKED)) {
@@ -414,7 +441,7 @@ void X2Focuser::setMainDialogControlState(X2GUIExchangeInterface* uiex, bool ena
 	uiex->setEnabled(SET_TEMP_SOURCE_CTRL, enabled);
 	uiex->setEnabled(SET_TEMP_SOURCE_BOTH, enabled);
 	uiex->setEnabled(PAUSE_TEMP_COMP, enabled);
-	uiex->setEnabled(SET_TEMP_COMP_RATIO, enabled);
+	uiex->setEnabled(SET_TEMP_COMP_FACTOR, enabled);
 	uiex->setEnabled(SET_TEMP_COMP_PERIOD, enabled);
 	uiex->setEnabled(SET_TEMP_COMP_DELTA, enabled);
 	uiex->setEnabled(SET_FOC_TEMP_OFFSET, enabled);

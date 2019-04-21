@@ -42,7 +42,7 @@
 #define SET_TEMP_SOURCE_BOTH	"radioButton_3"
 #define PAUSE_TEMP_COMP			"checkBox_3"
 
-#define SET_TEMP_COMP_RATIO		"pushButton_13"
+#define SET_TEMP_COMP_FACTOR		"pushButton_13"
 #define SET_TEMP_COMP_PERIOD	"pushButton_14"
 #define SET_TEMP_COMP_DELTA		"pushButton_15"
 #define SET_FOC_TEMP_OFFSET		"pushButton_16"
@@ -63,7 +63,7 @@
 #define SET_TEMP_SOURCE_BOTH_CLICKED	"on_radioButton_3_clicked"
 #define PAUSE_TEMP_COMP_CLICKED			"on_checkBox_3_clicked"
 
-#define SET_TEMP_COMP_RATIO_CLICKED		"on_pushButton_13_clicked"
+#define SET_TEMP_COMP_FACTOR_CLICKED		"on_pushButton_13_clicked"
 #define SET_TEMP_COMP_PERIOD_CLICKED	"on_pushButton_14_clicked"
 #define SET_TEMP_COMP_DELTA_CLICKED		"on_pushButton_15_clicked"
 #define SET_FOC_TEMP_OFFSET_CLICKED		"on_pushButton_16_clicked"

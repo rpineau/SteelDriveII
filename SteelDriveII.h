@@ -102,6 +102,12 @@ public:
 	int		getTempCompSensorSource(int &nSource);
 	int		setTempCompSensorSource(const int &nSource);
 
+    int     pauseTempComp(const bool &bPaused);
+    int     isTempCompPased(bool &bPaused);
+    
+    int     getTempCompFactor(double &dFactor);
+    int     setTempCompFactor(const double &dFactor);
+    
 protected:
 
     int				SteelDriveIICommand(const char *pszCmd, char *pszResult, int nResultMaxLen);
