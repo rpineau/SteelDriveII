@@ -897,7 +897,7 @@ int CSteelDriveII::getTemperatureFromSource(int nSource, double &dTemperature)
 		return ERR_COMMNOLINK;
 
 	// 0 = focuser, 1 = controller
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "BS GET TEMP%d\n", nSource);
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS GET TEMP%d\n", nSource);
 
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
@@ -978,7 +978,7 @@ int CSteelDriveII::isTempCompEnable(bool &bEnable)
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(Logfile, "[%s] [CSteelDriveII::getUseEndStop] bEnable = %s\n", timestamp, bEnable?"Yes":"No");
+	fprintf(Logfile, "[%s] [CSteelDriveII::isTempCompEnable] bEnable = %s\n", timestamp, bEnable?"Yes":"No");
 	fflush(Logfile);
 #endif
 
@@ -1051,7 +1051,7 @@ int CSteelDriveII::pauseTempComp(const bool &bPaused)
     return nErr;
 }
 
-int CSteelDriveII::isTempCompPased(bool &bPaused)
+int CSteelDriveII::isTempCompPaused(bool &bPaused)
 {
     int nErr = BS_OK;
     char szResp[SERIAL_BUFFER_SIZE];
@@ -1105,7 +1105,6 @@ int CSteelDriveII::setTempCompFactor(const double &dFactor)
         return ERR_CMDFAILED;
     
     return nErr;
-
 }
 
 int CSteelDriveII::getTempCompFactor(double &dFactor)
@@ -1149,6 +1148,196 @@ int CSteelDriveII::getTempCompFactor(double &dFactor)
     
     return nErr;
 }
+
+
+
+int CSteelDriveII::getTemperatureOffsetFromSource(int nSource, double &dTemperatureOffset)
+{
+	int nErr = SB_OK;
+
+	char szResp[SERIAL_BUFFER_SIZE];
+	char szCmd[SERIAL_BUFFER_SIZE];
+
+	std::vector<std::string> vFieldsData;
+	std::vector<std::string> vNameField;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	// 0 = focuser, 1 = controller
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS GET TEMP%d_OFS\n", nSource);
+
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // temp is in 2nd field
+			dTemperatureOffset = std::stof(vFieldsData[1]);
+			if(dTemperatureOffset == -128.0f) {
+				dTemperatureOffset = -100.0f;
+			}
+		}
+	}
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getTemperatureFromSource] source TEMP%d_OFS dTemperatureOffset = %3.2f\n", timestamp, nSource, dTemperatureOffset);
+	fflush(Logfile);
+#endif
+
+	return nErr;
+}
+
+int CSteelDriveII::setTemperatureOffsetForSource(int nSource, double &dTemperatureOffset)
+{
+	int nErr = SB_OK;
+
+	char szResp[SERIAL_BUFFER_SIZE];
+	char szCmd[SERIAL_BUFFER_SIZE];
+
+	std::vector<std::string> vFieldsData;
+	std::vector<std::string> vNameField;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	// 0 = focuser, 1 = controller
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TEMP%d_OFS:%3.2f\n", nSource, dTemperatureOffset);
+
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+
+int CSteelDriveII::getPIDControl(bool bIsEnabled)
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	bIsEnabled = false;
+	nErr = SteelDriveIICommand("$BS GET PID_CTRL\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			bIsEnabled = (vFieldsData[1] == "1");
+		}
+	}
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getPIDControl] bEnable = %s\n", timestamp, bIsEnabled?"Yes":"No");
+	fflush(Logfile);
+#endif
+
+	return nErr;
+}
+
+int CSteelDriveII::setPIDControl(const bool bEnable)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET PID_CTRL:%s\n", bEnable?"1":"0");
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+int CSteelDriveII::getPIDTarget(double &dTarget)
+{
+	int nErr = SB_OK;
+
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	std::vector<std::string> vFieldsData;
+	std::vector<std::string> vNameField;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	nErr = SteelDriveIICommand("$BS GET PID_TARGET\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // temp is in 2nd field
+			dTarget = std::stof(vFieldsData[1]);
+		}
+	}
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getPIDTarget] PID Target = %3.2f\n", timestamp, dTarget);
+	fflush(Logfile);
+#endif
+
+	return nErr;
+}
+
+int CSteelDriveII::setPIDTarget(const double &dTarget)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET PID_TARGET:%3.2f\n", dTarget);
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+
 #pragma mark - command and response functions
 
 int CSteelDriveII::disableCRC()

@@ -103,11 +103,21 @@ public:
 	int		setTempCompSensorSource(const int &nSource);
 
     int     pauseTempComp(const bool &bPaused);
-    int     isTempCompPased(bool &bPaused);
+    int     isTempCompPaused(bool &bPaused);
     
     int     getTempCompFactor(double &dFactor);
     int     setTempCompFactor(const double &dFactor);
-    
+
+	int		getTemperatureOffsetFromSource(int nSource, double &dTemperatureOffset);
+	int		setTemperatureOffsetForSource(int nSource, double &dTemperatureOffset);
+
+	int		getPIDControl(bool bIsEnabled);
+	int		setPIDControl(const bool bEnable);
+
+	int     getPIDTarget(double &dTarget);
+	int     setPIDTarget(const double &dTarget);
+
+
 protected:
 
     int				SteelDriveIICommand(const char *pszCmd, char *pszResult, int nResultMaxLen);
