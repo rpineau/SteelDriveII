@@ -980,7 +980,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>PWM for 12V dew heater output :</string>
+        <string>PWM for 12V dew heater output (%):</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

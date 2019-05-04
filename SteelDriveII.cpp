@@ -1031,6 +1031,52 @@ int CSteelDriveII::setTempCompSensorSource(const int &nSource)
     return nErr;
 }
 
+int CSteelDriveII::getTempCompPeriod(int &nTimeMs)
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	nErr = SteelDriveIICommand("$BS GET TCOMP_PERIOD\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			nTimeMs = std::stoi(vFieldsData[1]);
+		}
+	}
+	return nErr;
+}
+
+int CSteelDriveII::setTempCompPeriod(const int &nTimeMs)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TCOMP_PERIOD:%d\n", nTimeMs);
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
 int CSteelDriveII::pauseTempComp(const bool &bPaused)
 {
     int nErr = BS_OK;
@@ -1337,6 +1383,98 @@ int CSteelDriveII::setPIDTarget(const double &dTarget)
 	return nErr;
 }
 
+
+int CSteelDriveII::getPIDSensorSource(int &nSource)
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	nErr = SteelDriveIICommand("$BS GET PID_SENSOR\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			nSource = std::stoi(vFieldsData[1]);
+		}
+	}
+	return nErr;
+}
+
+int CSteelDriveII::setPiDSensorSource(const int &nSource)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET PID_SENSOR:%d\n", nSource);
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+int CSteelDriveII::getPWM(int &nValue)
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	nErr = SteelDriveIICommand("$BS GET PWM\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			nValue = std::stoi(vFieldsData[1]);
+		}
+	}
+	return nErr;
+}
+
+int CSteelDriveII::setPWM(const int &nValue)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET PWM:%d\n", nValue);
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
 
 #pragma mark - command and response functions
 

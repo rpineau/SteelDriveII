@@ -102,6 +102,9 @@ public:
 	int		getTempCompSensorSource(int &nSource);
 	int		setTempCompSensorSource(const int &nSource);
 
+	int		getTempCompPeriod(int &nTimeMs);
+	int		setTempCompPeriod(const int &nTimeMs);
+
     int     pauseTempComp(const bool &bPaused);
     int     isTempCompPaused(bool &bPaused);
     
@@ -117,6 +120,11 @@ public:
 	int     getPIDTarget(double &dTarget);
 	int     setPIDTarget(const double &dTarget);
 
+	int		getPIDSensorSource(int &nSource);
+	int		setPiDSensorSource(const int &nSource);
+
+	int		getPWM(int &nValue);
+	int		setPWM(const int &nValue);
 
 protected:
 

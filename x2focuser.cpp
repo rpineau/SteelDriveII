@@ -187,7 +187,10 @@ int	X2Focuser::execModalSettingsDialog(void)
     X2GUIInterface*					ui = uiutil.X2UI();
     X2GUIExchangeInterface*			dx = NULL;//Comes after ui is loaded
     bool bPressedOK = false;
+	bool bTmp;
     int nTmp;
+	double dTmp;
+
     char szTmp[LOG_BUFFER_SIZE];
 
     if (NULL == ui)
@@ -206,9 +209,6 @@ int	X2Focuser::execModalSettingsDialog(void)
 
         setMainDialogControlState(dx, true);
 
-        m_SteelDriveII.getCurrentHold(nTmp);
-        dx->setPropertyInt("holdCurrent", "value", nTmp);
-
         m_SteelDriveII.getPosition(m_nPosition);
         snprintf(szTmp, LOG_BUFFER_SIZE, "%d", m_nPosition);
         dx->setPropertyString("currentPos", "text", szTmp);
@@ -216,24 +216,102 @@ int	X2Focuser::execModalSettingsDialog(void)
         m_SteelDriveII.getMaxPosLimit(nTmp);
         dx->setPropertyInt("maxPos", "value", nTmp);
 
+		m_SteelDriveII.getPosition(m_nPosition);
         dx->setPropertyInt("newPos", "value", m_nPosition);
+
+		m_SteelDriveII.getUseEndStop(bTmp);
+		dx->setChecked(USE_END_STOP, bTmp?1:0);
+
+		m_SteelDriveII.getCurrentHold(nTmp);
+		dx->setPropertyInt("holdCurrent", "value", nTmp);
+
+		m_SteelDriveII.getCurrentMove(nTmp);
+		dx->setPropertyInt("moveCurrent", "value", nTmp);
+
+		m_SteelDriveII.getRCX('A', nTmp);
+		dx->setPropertyInt("RCATiming", "value", nTmp);
+
+		m_SteelDriveII.getRCX('B', nTmp);
+		dx->setPropertyInt("RCBTiming", "value", nTmp);
+
+		m_SteelDriveII.isTempCompEnable(bTmp);
+		dx->setChecked(ENABLE_TEMP_COMP, bTmp?1:0);
+
+		m_SteelDriveII.getTempCompSensorSource(nTmp);
+		switch(nTmp) {
+			case FOCUSER :
+				dx->setChecked(SET_TEMP_SOURCE_FOC, 1);
+				break;
+			case CONTROLLER :
+				dx->setChecked(SET_TEMP_SOURCE_CTRL, 1);
+				break;
+			case BOTH :
+				dx->setChecked(SET_TEMP_SOURCE_BOTH, 1);
+				break;
+			default:
+				dx->setChecked(SET_TEMP_SOURCE_FOC, 1);
+				break;
+		}
+
+		m_SteelDriveII.isTempCompPaused(bTmp);
+		dx->setChecked(PAUSE_TEMP_COMP, bTmp?1:0);
+
+		m_SteelDriveII.getTempCompFactor(dTmp);
+		dx->setPropertyDouble("compFactor", "value", dTmp);
+
+		m_SteelDriveII.getTempCompPeriod(nTmp);
+		dx->setPropertyInt("compPeriod", "value", nTmp);
+
+		m_SteelDriveII.getTempCompFactor(dTmp);
+		dx->setPropertyDouble("compThreshold", "value", dTmp);
+
+		m_SteelDriveII.getTemperature(FOCUSER, dTmp);
+		dx->setPropertyDouble("focuserTemp", "value", dTmp);
+
+		m_SteelDriveII.getTemperatureOffsetFromSource(FOCUSER, dTmp);
+		dx->setPropertyDouble("focTempOffset", "value", dTmp);
+
+		m_SteelDriveII.getTemperature(CONTROLLER, dTmp);
+		dx->setPropertyDouble("controllerTemp", "value", dTmp);
+
+		m_SteelDriveII.getTemperatureOffsetFromSource(CONTROLLER, dTmp);
+		dx->setPropertyDouble("controllerTempOffset", "value", dTmp);
+
+		m_SteelDriveII.getPIDControl(bTmp);
+		dx->setChecked(ENABLE_TEMP_PID_COMP, bTmp?1:0);
+
+		m_SteelDriveII.getPIDTarget(dTmp);
+		dx->setPropertyDouble("PidTempTarget", "value", dTmp);
+
+		m_SteelDriveII.getPWM(nTmp);
+		dx->setPropertyInt("PwmOutputPercent", "value", nTmp);
 
     }
     else {
         // disable unsued controls when not connected
+		nTmp = 0;
+		dTmp = 0.0f;
         setMainDialogControlState(dx, false);
-        dx->setPropertyInt("accelerationCurrent", "value", 0);
-        dx->setPropertyInt("runCurrent", "value", 0);
-        dx->setPropertyInt("decCurrent", "value", 0);
-        dx->setPropertyInt("holdCurrent", "value", 0);
-        dx->setPropertyInt("accelerationSpeed", "value", 0);
-        dx->setPropertyInt("runSpeed", "value", 0);
-        dx->setPropertyInt("decelerationSpeed", "value", 0);
-        dx->setPropertyString("currentPos", "text", "");
-        dx->setPropertyInt("minPos", "value", 0);
-        dx->setPropertyInt("maxPos", "value", 0);
-        dx->setPropertyInt("newPos", "value", 0);
-    }
+		dx->setPropertyInt("minPos", "value", nTmp);
+		dx->setPropertyInt("maxPos", "value", nTmp);
+		dx->setPropertyInt("newPos", "value", nTmp);
+
+		dx->setPropertyInt("holdCurrent", "value", nTmp);
+		dx->setPropertyInt("moveCurrent", "value", nTmp);
+		dx->setPropertyInt("RCATiming", "value", nTmp);
+		dx->setPropertyInt("RCBTiming", "value", nTmp);
+
+		dx->setPropertyDouble("compFactor", "value", dTmp);
+		dx->setPropertyInt("compPeriod", "value", nTmp);
+		dx->setPropertyDouble("compThreshold", "value", dTmp);
+		dx->setPropertyDouble("focuserTemp", "value", dTmp);
+		dx->setPropertyDouble("focTempOffset", "value", dTmp);
+		dx->setPropertyDouble("controllerTemp", "value", dTmp);
+		dx->setPropertyDouble("controllerTempOffset", "value", dTmp);
+
+		dx->setPropertyDouble("PidTempTarget", "value", dTmp);
+		dx->setPropertyInt("PwmOutputPercent", "value", nTmp);
+	}
 
     //Display the user interface
     m_nCurrentDialog = MAIN;
@@ -260,8 +338,15 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
     double dTmp = 0.0f;
     char szTmp[LOG_BUFFER_SIZE];
 
+	// focuserTemp and controllerTemp update  in timer
+	if (!strcmp(pszEvent, "on_timer")) {
+		m_SteelDriveII.getTemperatureFromSource(FOCUSER, dTmp);
+		uiex->setPropertyDouble("focuserTemp", "value", dTmp);
+		m_SteelDriveII.getTemperatureFromSource(CONTROLLER, dTmp);
+		uiex->setPropertyDouble("controllerTemp", "value", dTmp);
+	}
 	// Positions
-	if (!strcmp(pszEvent, SET_CURRENT_AS_MAX_CLICKED)) {
+	else if (!strcmp(pszEvent, SET_CURRENT_AS_MAX_CLICKED)) {
 		nErr = m_SteelDriveII.setCurrentPosAsMax();
 		if(nErr) {
 			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the current position as the maximum position : %d", nErr);
@@ -395,30 +480,80 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	}
 
 	else if	(!strcmp(pszEvent, SET_TEMP_COMP_PERIOD_CLICKED)) {
+		uiex->propertyDouble("compPeriod", "value", dTmp);
+		nErr = m_SteelDriveII.setTempCompPeriod(dTmp);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the temperature comp Period : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
 	}
 
 	else if	(!strcmp(pszEvent, SET_TEMP_COMP_DELTA_CLICKED)) {
+		uiex->propertyDouble("compThreshold", "value", dTmp);
+		nErr = m_SteelDriveII.setTempCompFactor(dTmp);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the temperature comp Factor (delta) : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
 	}
 
 	else if	(!strcmp(pszEvent, SET_FOC_TEMP_OFFSET_CLICKED)) {
+		uiex->propertyDouble("focTempOffset", "value", dTmp);
+		nErr = m_SteelDriveII.setTemperatureOffsetForSource(FOCUSER, dTmp);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the temperature focuser offset) : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
 	}
 
 	else if	(!strcmp(pszEvent, SET_CTRL_TEMP_OFFSET_CLICKED)) {
+		uiex->propertyDouble("focTempOffset", "value", dTmp);
+		nErr = m_SteelDriveII.setTemperatureOffsetForSource(CONTROLLER, dTmp);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the temperature controller offset) : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
 	}
 
 	else if	(!strcmp(pszEvent, ENABLE_TEMP_PID_COMP_CLICKED)) {
+		nErr = m_SteelDriveII.setPIDControl(uiex->isChecked(ENABLE_TEMP_PID_COMP)==1?true:false);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error %s temperature compensation : %d", uiex->isChecked(ENABLE_TEMP_COMP)==1?"enabling":"disabling", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
 	}
 
 	else if	(!strcmp(pszEvent, SET_PID_TEMP_SOURCE_FOC_CLICKED)) {
+		nErr = m_SteelDriveII.setPiDSensorSource(FOCUSER);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting temp comp source to focuser sensor : %d",  nErr);
+			uiex->messageBox("Error", szTmp);
+		}
 	}
 
 	else if	(!strcmp(pszEvent, SET_PID_TEMP_SOURCE_CTRL_CLICKED)) {
+		nErr = m_SteelDriveII.setPiDSensorSource(CONTROLLER);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting temp comp source to focuser sensor : %d",  nErr);
+			uiex->messageBox("Error", szTmp);
+		}
 	}
 
 	else if	(!strcmp(pszEvent, SET_PID_TEMP_SOURCE_BOTH_CLICKED)) {
+		nErr = m_SteelDriveII.setPiDSensorSource(BOTH);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting temp comp source to focuser sensor : %d",  nErr);
+			uiex->messageBox("Error", szTmp);
+		}
 	}
 
 	else if	(!strcmp(pszEvent, SET_PWM_DEW_HEATER_CLICKED)) {
+		uiex->propertyInt("PwmOutputPercent", "value", nTmp);
+		nErr = m_SteelDriveII.setPWM(nTmp);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the PWM : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
 	}
 }
 
