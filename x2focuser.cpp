@@ -518,7 +518,7 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	else if	(!strcmp(pszEvent, ENABLE_TEMP_PID_COMP_CLICKED)) {
 		nErr = m_SteelDriveII.setPIDControl(uiex->isChecked(ENABLE_TEMP_PID_COMP)==1?true:false);
 		if(nErr) {
-			snprintf(szTmp, LOG_BUFFER_SIZE, "Error %s temperature compensation : %d", uiex->isChecked(ENABLE_TEMP_COMP)==1?"enabling":"disabling", nErr);
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error %s PID temperature compensation : %d", uiex->isChecked(ENABLE_TEMP_COMP)==1?"enabling":"disabling", nErr);
 			uiex->messageBox("Error", szTmp);
 		}
 	}
@@ -526,7 +526,7 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	else if	(!strcmp(pszEvent, SET_PID_TEMP_SOURCE_FOC_CLICKED)) {
 		nErr = m_SteelDriveII.setPiDSensorSource(FOCUSER);
 		if(nErr) {
-			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting temp comp source to focuser sensor : %d",  nErr);
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting PID temp comp source to focuser sensor : %d",  nErr);
 			uiex->messageBox("Error", szTmp);
 		}
 	}
@@ -534,7 +534,7 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	else if	(!strcmp(pszEvent, SET_PID_TEMP_SOURCE_CTRL_CLICKED)) {
 		nErr = m_SteelDriveII.setPiDSensorSource(CONTROLLER);
 		if(nErr) {
-			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting temp comp source to focuser sensor : %d",  nErr);
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting PID temp comp source to controller sensor : %d",  nErr);
 			uiex->messageBox("Error", szTmp);
 		}
 	}
@@ -542,7 +542,7 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	else if	(!strcmp(pszEvent, SET_PID_TEMP_SOURCE_BOTH_CLICKED)) {
 		nErr = m_SteelDriveII.setPiDSensorSource(BOTH);
 		if(nErr) {
-			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting temp comp source to focuser sensor : %d",  nErr);
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting PID temp comp source to both sensor : %d",  nErr);
 			uiex->messageBox("Error", szTmp);
 		}
 	}

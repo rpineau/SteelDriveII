@@ -1488,7 +1488,7 @@ int CSteelDriveII::disableCRC()
     return nErr;
 }
 
-int CSteelDriveII::SteelDriveIICommand(const char *pszszCmd, char *pszResult, int nResultMaxLen)
+int CSteelDriveII::SteelDriveIICommand(const char *pszCmd, char *pszResult, int nResultMaxLen)
 {
     int nErr = BS_OK;
     char szResp[SERIAL_BUFFER_SIZE];
@@ -1508,14 +1508,14 @@ int CSteelDriveII::SteelDriveIICommand(const char *pszszCmd, char *pszResult, in
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand Sending '%s'\n", timestamp, pszszCmd);
+	fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand Sending '%s'\n", timestamp, pszCmd);
 	fflush(Logfile);
 #endif
 
-    sTmp.assign(pszszCmd);
+    sTmp.assign(pszCmd);
     sTmp = trim(sTmp," \n\r");
 
-    nErr = m_pSerx->writeFile((void *)pszszCmd, strlen(pszszCmd), ulBytesWrite);
+    nErr = m_pSerx->writeFile((void *)pszCmd, strlen(pszCmd), ulBytesWrite);
     m_pSerx->flushTx();
 
     if(nErr){
@@ -1601,7 +1601,7 @@ int CSteelDriveII::readResponse(char *pszRespBuffer, int nBufferLen)
     } while (*pszBufPtr++ != '\n' && ulTotalBytesRead < nBufferLen );
 
     if(ulTotalBytesRead)
-        *(pszBufPtr-1) = 0; //remove the \n or the !
+        *(pszBufPtr-1) = 0; //remove the \n
 
     return nErr;
 }
