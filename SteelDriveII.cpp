@@ -1188,7 +1188,7 @@ int CSteelDriveII::getTempCompFactor(double &dFactor)
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CSteelDriveII::getTemperatureFromSource] temp comp factor = %3.2f\n", timestamp, dFactor);
+    fprintf(Logfile, "[%s] [CSteelDriveII::getTempCompFactor] temp comp factor = %3.2f\n", timestamp, dFactor);
     fflush(Logfile);
 #endif
     
@@ -1235,7 +1235,7 @@ int CSteelDriveII::getTemperatureOffsetFromSource(int nSource, double &dTemperat
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(Logfile, "[%s] [CSteelDriveII::getTemperatureFromSource] source TEMP%d_OFS dTemperatureOffset = %3.2f\n", timestamp, nSource, dTemperatureOffset);
+	fprintf(Logfile, "[%s] [CSteelDriveII::getTemperatureOffsetFromSource] source TEMP%d_OFS dTemperatureOffset = %3.2f\n", timestamp, nSource, dTemperatureOffset);
 	fflush(Logfile);
 #endif
 

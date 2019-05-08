@@ -341,9 +341,11 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	// focuserTemp and controllerTemp update  in timer
 	if (!strcmp(pszEvent, "on_timer")) {
 		m_SteelDriveII.getTemperatureFromSource(FOCUSER, dTmp);
-		uiex->setPropertyDouble("focuserTemp", "value", dTmp);
+        snprintf(szTmp, LOG_BUFFER_SIZE, "%3.2f", dTmp);
+		uiex->setText("focuserTemp", szTmp);
 		m_SteelDriveII.getTemperatureFromSource(CONTROLLER, dTmp);
-		uiex->setPropertyDouble("controllerTemp", "value", dTmp);
+        snprintf(szTmp, LOG_BUFFER_SIZE, "%3.2f", dTmp);
+        uiex->setText("controllerTemp", szTmp);
 	}
 	// Positions
 	else if (!strcmp(pszEvent, SET_CURRENT_AS_MAX_CLICKED)) {
