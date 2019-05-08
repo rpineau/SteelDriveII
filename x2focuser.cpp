@@ -221,7 +221,12 @@ int	X2Focuser::execModalSettingsDialog(void)
 
 		m_SteelDriveII.getUseEndStop(bTmp);
 		dx->setChecked(USE_END_STOP, bTmp?1:0);
+        if(bTmp)
+            dx->setEnabled(INITIATE_ZEROING, true);
+        else
+            dx->setEnabled(INITIATE_ZEROING, false);
 
+            
 		m_SteelDriveII.getCurrentHold(nTmp);
 		dx->setPropertyInt("holdCurrent", "value", nTmp);
 
@@ -388,6 +393,11 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 
 	else if	(!strcmp(pszEvent, USE_END_STOP_CLICKED)) {
 		nErr = m_SteelDriveII.setUseEndStop(uiex->isChecked(USE_END_STOP)==1?true:false);
+        if(uiex->isChecked(USE_END_STOP))
+            uiex->setEnabled(INITIATE_ZEROING, true);
+        else
+            uiex->setEnabled(INITIATE_ZEROING, false);
+
 		if(nErr) {
 			snprintf(szTmp, LOG_BUFFER_SIZE, "Error changing end stop use : %d", nErr);
 			uiex->messageBox("Error", szTmp);
