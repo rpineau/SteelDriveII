@@ -126,6 +126,15 @@ public:
 	int		getPWM(int &nValue);
 	int		setPWM(const int &nValue);
 
+	int		getTempAmbienSensorSource(int &nSource);
+	int		setTempAmbienSensorSource(const int &nSource);
+
+	int		getPidDewTemperatureOffset(double &dOffset);
+	int		setPidDewTemperatureOffset(const double &dOffset);
+
+	int		enableAutoDew(const bool &bEnable);
+	int		isAutoDewEnable(bool &bEnable);
+
 protected:
 
     int				SteelDriveIICommand(const char *pszCmd, char *pszResult, int nResultMaxLen);

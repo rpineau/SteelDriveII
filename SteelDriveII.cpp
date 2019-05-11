@@ -1349,9 +1349,7 @@ int CSteelDriveII::setPIDControl(const bool bEnable)
 int CSteelDriveII::getPIDTarget(double &dTarget)
 {
 	int nErr = SB_OK;
-
 	char szResp[SERIAL_BUFFER_SIZE];
-
 	std::vector<std::string> vFieldsData;
 	std::vector<std::string> vNameField;
 
@@ -1431,6 +1429,7 @@ int CSteelDriveII::getPIDSensorSource(int &nSource)
 	return nErr;
 }
 
+
 int CSteelDriveII::setPiDSensorSource(const int &nSource)
 {
 	int nErr = BS_OK;
@@ -1450,6 +1449,9 @@ int CSteelDriveII::setPiDSensorSource(const int &nSource)
 
 	return nErr;
 }
+
+
+#pragma mark - Dew control
 
 int CSteelDriveII::getPWM(int &nValue)
 {
@@ -1496,6 +1498,170 @@ int CSteelDriveII::setPWM(const int &nValue)
 
 	return nErr;
 }
+
+
+
+int CSteelDriveII::getTempAmbienSensorSource(int &nSource)
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	nErr = SteelDriveIICommand("$BS GET AMBIENT_SENSOR\r\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			nSource = std::stoi(vFieldsData[1]);
+		}
+	}
+	return nErr;
+}
+
+int CSteelDriveII::setTempAmbienSensorSource(const int &nSource)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET AMBIENT_SENSOR:%d\r\n", nSource);
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+int CSteelDriveII::getPidDewTemperatureOffset(double &dOffset)
+{
+	int nErr = SB_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+	std::vector<std::string> vNameField;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	nErr = SteelDriveIICommand("$BS GET PID_DEW_OFS\r\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // temp is in 2nd field
+			dOffset = std::stof(vFieldsData[1]);
+		}
+	}
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getPidDewTemperatureOffset] PID dew offset = %3.2f\n", timestamp, dOffset);
+	fflush(Logfile);
+#endif
+
+	return nErr;
+}
+
+
+int CSteelDriveII::setPidDewTemperatureOffset(const double &dOffset)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET PID_DEW_OFS:%3.2f\r\n", dOffset);
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+
+int CSteelDriveII::enableAutoDew(const bool &bEnable)
+{
+	int nErr = BS_OK;
+	char szCmd[SERIAL_BUFFER_SIZE];
+	char szResp[SERIAL_BUFFER_SIZE];
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET AUTO_DEW:%s\r\n", bEnable?"1":"0");
+	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	return nErr;
+}
+
+int CSteelDriveII::isAutoDewEnable(bool &bEnable)
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> vFieldsData;
+
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+	bEnable = false;
+	nErr = SteelDriveIICommand("$BS GET AUTO_DEW\r\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+	if(strstr(szResp, "ERROR"))
+		return ERR_CMDFAILED;
+
+	if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
+		nErr = parseFields(szResp, vFieldsData, ':');
+		if(nErr)
+			return nErr;
+		if(vFieldsData.size()>1) { // value is in 2nd field
+			bEnable = (vFieldsData[1] == "1");
+		}
+	}
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::isAutoDewEnable] bEnable = %s\n", timestamp, bEnable?"Yes":"No");
+	fflush(Logfile);
+#endif
+
+	return nErr;
+}
+
+
 
 #pragma mark - command and response functions
 

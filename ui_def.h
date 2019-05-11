@@ -20,20 +20,6 @@
 #define SYNC_TO_POS_CLICKED			"on_pushButton_7_clicked"
 #define USE_END_STOP_CLICKED		"on_checkBox_stateChanged"
 
-// expert settings UI
-#pragma mark - expert settings UI
-#define SET_HOLD_CURRENT	"pushButton_8"
-#define SET_MOVE_CURRENT	"pushButton_9"
-#define SET_RCA_TIMING		"pushButton_10"
-#define SET_RCB_TIMING		"pushButton_11"
-
-// expert settings Events
-#pragma mark - expert settings Events
-#define SET_HOLD_CURRENT_CLICKED	"on_pushButton_8_clicked"
-#define SET_MOVE_CURRENT_CLICKED	"on_pushButton_9_clicked"
-#define SET_RCA_TIMING_CLICKED		"on_pushButton_10_clicked"
-#define SET_RCB_TIMING_CLICKED		"on_pushButton_11_clicked"
-
 // temperature settings UI
 #pragma mark - temperature settings UI
 #define ENABLE_TEMP_COMP		"checkBox_2"
@@ -48,12 +34,17 @@
 #define SET_FOC_TEMP_OFFSET		"pushButton_16"
 #define SET_CTRL_TEMP_OFFSET	"pushButton_17"
 
-
 #define ENABLE_TEMP_PID_COMP		"checkBox_4"
 #define SET_PID_TEMP_SOURCE_FOC		"radioButton_7"
 #define SET_PID_TEMP_SOURCE_CTRL	"radioButton_8"
 #define SET_PID_TEMP_SOURCE_BOTH	"radioButton_9"
+
+// dew control
 #define SET_PWM_DEW_HEATER			"pushButton_12"
+#define SET_DEW_TEMP_SOURCE_FOC		"radioButton_10"
+#define SET_DEW_TEMP_SOURCE_CTRL	"radioButton_11"
+#define SET_DEW_TEMP_OFFSET			"pushButton_18"
+#define ENABLE_AUTO_DEW_COMP		"checkBox_5"
 
 // temperature settings Events
 #pragma mark - temperature settings Events
@@ -63,7 +54,7 @@
 #define SET_TEMP_SOURCE_BOTH_CLICKED	"on_radioButton_3_clicked"
 #define PAUSE_TEMP_COMP_CLICKED			"on_checkBox_3_clicked"
 
-#define SET_TEMP_COMP_FACTOR_CLICKED		"on_pushButton_13_clicked"
+#define SET_TEMP_COMP_FACTOR_CLICKED	"on_pushButton_13_clicked"
 #define SET_TEMP_COMP_PERIOD_CLICKED	"on_pushButton_14_clicked"
 #define SET_TEMP_COMP_DELTA_CLICKED		"on_pushButton_15_clicked"
 #define SET_FOC_TEMP_OFFSET_CLICKED		"on_pushButton_16_clicked"
@@ -74,7 +65,13 @@
 #define SET_PID_TEMP_SOURCE_FOC_CLICKED		"on_radioButton_7_clicked"
 #define SET_PID_TEMP_SOURCE_CTRL_CLICKED	"on_radioButton_8_clicked"
 #define SET_PID_TEMP_SOURCE_BOTH_CLICKED	"on_radioButton_9_clicked"
+
+// dew settings event
 #define SET_PWM_DEW_HEATER_CLICKED			"on_pushButton_12_clicked"
+#define SET_DEW_TEMP_SOURCE_FOC_CLICKED		"on_radioButton_10_clicked"
+#define SET_DEW_TEMP_SOURCE_CTRL_CLICKED	"on_radioButton_11_clicked"
+#define SET_DEW_TEMP_OFFSET_CLICKED			"on_pushButton_18_clicked"
+#define ENABLE_AUTO_DEW_CLICKED				"on_checkBox_5_stateChanged"
 
 
 

@@ -226,19 +226,6 @@ int	X2Focuser::execModalSettingsDialog(void)
         else
             dx->setEnabled(INITIATE_ZEROING, false);
 
-            
-		m_SteelDriveII.getCurrentHold(nTmp);
-		dx->setPropertyInt("holdCurrent", "value", nTmp);
-
-		m_SteelDriveII.getCurrentMove(nTmp);
-		dx->setPropertyInt("moveCurrent", "value", nTmp);
-
-		m_SteelDriveII.getRCX('A', nTmp);
-		dx->setPropertyInt("RCATiming", "value", nTmp);
-
-		m_SteelDriveII.getRCX('B', nTmp);
-		dx->setPropertyInt("RCBTiming", "value", nTmp);
-
 		m_SteelDriveII.isTempCompEnable(bTmp);
 		dx->setChecked(ENABLE_TEMP_COMP, bTmp?1:0);
 
@@ -291,6 +278,23 @@ int	X2Focuser::execModalSettingsDialog(void)
 		m_SteelDriveII.getPWM(nTmp);
 		dx->setPropertyInt("PwmOutputPercent", "value", nTmp);
 
+		m_SteelDriveII.getTempAmbienSensorSource(nTmp);
+		switch(nTmp) {
+			case FOCUSER :
+				dx->setChecked(SET_DEW_TEMP_SOURCE_FOC, 1);
+				break;
+			case CONTROLLER :
+				dx->setChecked(SET_DEW_TEMP_SOURCE_CTRL, 1);
+				break;
+			default:
+				dx->setChecked(SET_DEW_TEMP_SOURCE_FOC, 1);
+				break;
+		}
+		m_SteelDriveII.getPidDewTemperatureOffset(dTmp);
+		dx->setPropertyDouble("focTempOffset", "value", dTmp);
+
+		m_SteelDriveII.isAutoDewEnable(bTmp);
+		dx->setChecked(ENABLE_AUTO_DEW_COMP, bTmp?1:0);
     }
     else {
         // disable unsued controls when not connected
@@ -300,11 +304,6 @@ int	X2Focuser::execModalSettingsDialog(void)
 		dx->setPropertyInt("minPos", "value", nTmp);
 		dx->setPropertyInt("maxPos", "value", nTmp);
 		dx->setPropertyInt("newPos", "value", nTmp);
-
-		dx->setPropertyInt("holdCurrent", "value", nTmp);
-		dx->setPropertyInt("moveCurrent", "value", nTmp);
-		dx->setPropertyInt("RCATiming", "value", nTmp);
-		dx->setPropertyInt("RCBTiming", "value", nTmp);
 
 		dx->setPropertyDouble("compFactor", "value", dTmp);
 		dx->setPropertyInt("compPeriod", "value", nTmp);
@@ -316,6 +315,7 @@ int	X2Focuser::execModalSettingsDialog(void)
 
 		dx->setPropertyDouble("PidTempTarget", "value", dTmp);
 		dx->setPropertyInt("PwmOutputPercent", "value", nTmp);
+		dx->setPropertyDouble("pidDewOffset", "value", dTmp);
 	}
 
     //Display the user interface
@@ -400,43 +400,6 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 
 		if(nErr) {
 			snprintf(szTmp, LOG_BUFFER_SIZE, "Error changing end stop use : %d", nErr);
-			uiex->messageBox("Error", szTmp);
-		}
-	}
-
-	// Expert settings
-	else if (!strcmp(pszEvent, SET_HOLD_CURRENT_CLICKED)) {
-        uiex->propertyInt("holdCurrent", "value", nTmp);
-        nErr = m_SteelDriveII.setCurrentHold(nTmp);
-		if(nErr) {
-			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the current hold value : %d", nErr);
-			uiex->messageBox("Error", szTmp);
-		}
-    }
-
-	else if	(!strcmp(pszEvent, SET_MOVE_CURRENT_CLICKED)) {
-		uiex->propertyInt("moveCurrent", "value", nTmp);
-		nErr = m_SteelDriveII.setCurrentMove(nTmp);
-		if(nErr) {
-			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the current move value : %d", nErr);
-			uiex->messageBox("Error", szTmp);
-		}
-	}
-
-	else if	(!strcmp(pszEvent, SET_RCA_TIMING_CLICKED)) {
-		uiex->propertyInt("RCATiming", "value", nTmp);
-		nErr = m_SteelDriveII.setRCX('A', nTmp);
-		if(nErr) {
-			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the RCA timing value : %d", nErr);
-			uiex->messageBox("Error", szTmp);
-		}
-	}
-
-	else if	(!strcmp(pszEvent, SET_RCB_TIMING_CLICKED)) {
-		uiex->propertyInt("RCBTiming", "value", nTmp);
-		nErr = m_SteelDriveII.setRCX('B', nTmp);
-		if(nErr) {
-			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the RCB timing value : %d", nErr);
 			uiex->messageBox("Error", szTmp);
 		}
 	}
@@ -571,17 +534,12 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 
 void X2Focuser::setMainDialogControlState(X2GUIExchangeInterface* uiex, bool enabled)
 {
-
+	// buttons, checkbox, radio buttons
     uiex->setEnabled(SET_CURRENT_AS_MAX, enabled);
 	uiex->setEnabled(INITIATE_ZEROING, enabled);
 	uiex->setEnabled(SET_MAX_POS, enabled);
 	uiex->setEnabled(SYNC_TO_POS, enabled);
 	uiex->setEnabled(USE_END_STOP, enabled);
-
-	uiex->setEnabled(SET_HOLD_CURRENT, enabled);
-	uiex->setEnabled(SET_MOVE_CURRENT, enabled);
-	uiex->setEnabled(SET_RCA_TIMING, enabled);
-	uiex->setEnabled(SET_RCB_TIMING, enabled);
 
 	uiex->setEnabled(ENABLE_TEMP_COMP, enabled);
 	uiex->setEnabled(SET_TEMP_SOURCE_FOC, enabled);
@@ -597,9 +555,28 @@ void X2Focuser::setMainDialogControlState(X2GUIExchangeInterface* uiex, bool ena
 	uiex->setEnabled(SET_PID_TEMP_SOURCE_FOC, enabled);
 	uiex->setEnabled(SET_PID_TEMP_SOURCE_CTRL, enabled);
 	uiex->setEnabled(SET_PID_TEMP_SOURCE_BOTH, enabled);
+
 	uiex->setEnabled(SET_PWM_DEW_HEATER, enabled);
+	uiex->setEnabled(SET_DEW_TEMP_SOURCE_FOC, enabled);
+	uiex->setEnabled(SET_DEW_TEMP_SOURCE_CTRL, enabled);
+	uiex->setEnabled(SET_DEW_TEMP_OFFSET, enabled);
+	uiex->setEnabled(ENABLE_AUTO_DEW_COMP, enabled);
 
 	uiex->setEnabled("pushButtonOK", enabled);
+
+	// fields
+	uiex->setEnabled("maxPos", enabled);
+	uiex->setEnabled("newPos", enabled);
+
+	uiex->setEnabled("PwmOutputPercent", enabled);
+	uiex->setEnabled("pidDewOffset", enabled);
+
+	uiex->setEnabled("compFactor", enabled);
+	uiex->setEnabled("compPeriod", enabled);
+	uiex->setEnabled("compThreshold", enabled);
+	uiex->setEnabled("focTempOffset", enabled);
+	uiex->setEnabled("controllerTempOffset", enabled);
+	uiex->setEnabled("PidTempTarget", enabled);
 }
 
 

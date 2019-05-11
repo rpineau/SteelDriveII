@@ -58,215 +58,6 @@
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <widget class="QGroupBox" name="groupBox">
-      <property name="geometry">
-       <rect>
-        <x>8</x>
-        <y>280</y>
-        <width>296</width>
-        <height>216</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Expert settings</string>
-      </property>
-      <widget class="QLabel" name="label_6">
-       <property name="geometry">
-        <rect>
-         <x>32</x>
-         <y>88</y>
-         <width>100</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Hold Current :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-      <widget class="QSpinBox" name="holdCurrent">
-       <property name="geometry">
-        <rect>
-         <x>160</x>
-         <y>88</y>
-         <width>64</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="maximum">
-        <number>127</number>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_8">
-       <property name="geometry">
-        <rect>
-         <x>232</x>
-         <y>88</y>
-         <width>50</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Set</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_7">
-       <property name="geometry">
-        <rect>
-         <x>32</x>
-         <y>120</y>
-         <width>100</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Move Current :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-      <widget class="QSpinBox" name="moveCurrent">
-       <property name="geometry">
-        <rect>
-         <x>160</x>
-         <y>120</y>
-         <width>64</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="maximum">
-        <number>127</number>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_9">
-       <property name="geometry">
-        <rect>
-         <x>232</x>
-         <y>120</y>
-         <width>50</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Set</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label">
-       <property name="geometry">
-        <rect>
-         <x>8</x>
-         <y>24</y>
-         <width>280</width>
-         <height>56</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; color:#ff0000;&quot;&gt;These are expert settings and should only be changed if one wants to use a different stepper motor or lift even heavier loads.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_8">
-       <property name="geometry">
-        <rect>
-         <x>32</x>
-         <y>152</y>
-         <width>100</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>RCA timing :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_9">
-       <property name="geometry">
-        <rect>
-         <x>32</x>
-         <y>184</y>
-         <width>100</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>RCB timing :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-      <widget class="QSpinBox" name="RCATiming">
-       <property name="geometry">
-        <rect>
-         <x>160</x>
-         <y>152</y>
-         <width>64</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="maximum">
-        <number>127</number>
-       </property>
-      </widget>
-      <widget class="QSpinBox" name="RCBTiming">
-       <property name="geometry">
-        <rect>
-         <x>160</x>
-         <y>184</y>
-         <width>64</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="maximum">
-        <number>127</number>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_10">
-       <property name="geometry">
-        <rect>
-         <x>232</x>
-         <y>152</y>
-         <width>50</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Set</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_11">
-       <property name="geometry">
-        <rect>
-         <x>232</x>
-         <y>184</y>
-         <width>50</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Set</string>
-       </property>
-      </widget>
-     </widget>
      <widget class="QLabel" name="label_5">
       <property name="geometry">
        <rect>
@@ -458,7 +249,7 @@
       <property name="geometry">
        <rect>
         <x>64</x>
-        <y>520</y>
+        <y>496</y>
         <width>81</width>
         <height>24</height>
        </rect>
@@ -474,7 +265,7 @@
       <property name="geometry">
        <rect>
         <x>176</x>
-        <y>520</y>
+        <y>496</y>
         <width>80</width>
         <height>24</height>
        </rect>
@@ -492,7 +283,7 @@
         <x>320</x>
         <y>32</y>
         <width>424</width>
-        <height>528</height>
+        <height>480</height>
        </rect>
       </property>
       <property name="title">
@@ -504,7 +295,7 @@
          <x>32</x>
          <y>56</y>
          <width>344</width>
-         <height>64</height>
+         <height>56</height>
         </rect>
        </property>
        <property name="title">
@@ -514,7 +305,7 @@
         <property name="geometry">
          <rect>
           <x>8</x>
-          <y>32</y>
+          <y>24</y>
           <width>96</width>
           <height>24</height>
          </rect>
@@ -527,7 +318,7 @@
         <property name="geometry">
          <rect>
           <x>120</x>
-          <y>32</y>
+          <y>24</y>
           <width>96</width>
           <height>24</height>
          </rect>
@@ -540,7 +331,7 @@
         <property name="geometry">
          <rect>
           <x>216</x>
-          <y>32</y>
+          <y>24</y>
           <width>120</width>
           <height>24</height>
          </rect>
@@ -621,7 +412,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>Pause temperature compensation</string>
+        <string>Temperature compensation paused</string>
        </property>
       </widget>
       <widget class="QLabel" name="label_10">
@@ -691,9 +482,9 @@
       <widget class="QLabel" name="focuserTemp">
        <property name="geometry">
         <rect>
-         <x>284</x>
+         <x>280</x>
          <y>232</y>
-         <width>48</width>
+         <width>56</width>
          <height>24</height>
         </rect>
        </property>
@@ -707,7 +498,7 @@
       <widget class="QLabel" name="controllerTemp">
        <property name="geometry">
         <rect>
-         <x>284</x>
+         <x>288</x>
          <y>280</y>
          <width>48</width>
          <height>24</height>
@@ -755,7 +546,7 @@
          <x>32</x>
          <y>408</y>
          <width>344</width>
-         <height>64</height>
+         <height>56</height>
         </rect>
        </property>
        <property name="title">
@@ -765,7 +556,7 @@
         <property name="geometry">
          <rect>
           <x>8</x>
-          <y>32</y>
+          <y>24</y>
           <width>96</width>
           <height>24</height>
          </rect>
@@ -778,7 +569,7 @@
         <property name="geometry">
          <rect>
           <x>120</x>
-          <y>32</y>
+          <y>24</y>
           <width>96</width>
           <height>24</height>
          </rect>
@@ -791,7 +582,7 @@
         <property name="geometry">
          <rect>
           <x>216</x>
-          <y>32</y>
+          <y>24</y>
           <width>120</width>
           <height>24</height>
          </rect>
@@ -970,51 +761,6 @@
         <string>Set</string>
        </property>
       </widget>
-      <widget class="QLabel" name="label_18">
-       <property name="geometry">
-        <rect>
-         <x>32</x>
-         <y>488</y>
-         <width>224</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>PWM for 12V dew heater output (%):</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-      <widget class="QSpinBox" name="PwmOutputPercent">
-       <property name="geometry">
-        <rect>
-         <x>264</x>
-         <y>488</y>
-         <width>88</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_12">
-       <property name="geometry">
-        <rect>
-         <x>360</x>
-         <y>488</y>
-         <width>50</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Set</string>
-       </property>
-      </widget>
       <widget class="Line" name="line">
        <property name="geometry">
         <rect>
@@ -1048,6 +794,155 @@
        </property>
        <property name="singleStep">
         <double>0.100000000000000</double>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox">
+      <property name="geometry">
+       <rect>
+        <x>8</x>
+        <y>272</y>
+        <width>296</width>
+        <height>208</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Dew control</string>
+      </property>
+      <widget class="QLabel" name="label_18">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>40</y>
+         <width>160</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>PWM for dew output (%):</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="PwmOutputPercent">
+       <property name="geometry">
+        <rect>
+         <x>168</x>
+         <y>40</y>
+         <width>64</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+       <property name="maximum">
+        <number>100</number>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_12">
+       <property name="geometry">
+        <rect>
+         <x>240</x>
+         <y>40</y>
+         <width>50</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Set</string>
+       </property>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_6">
+       <property name="geometry">
+        <rect>
+         <x>8</x>
+         <y>72</y>
+         <width>272</width>
+         <height>56</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Ambient  sensor</string>
+       </property>
+       <widget class="QRadioButton" name="radioButton_10">
+        <property name="geometry">
+         <rect>
+          <x>32</x>
+          <y>24</y>
+          <width>96</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Focuser</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="radioButton_11">
+        <property name="geometry">
+         <rect>
+          <x>144</x>
+          <y>24</y>
+          <width>96</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Controller</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>48</x>
+         <y>144</y>
+         <width>104</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>PID dew offset :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QDoubleSpinBox" name="pidDewOffset">
+       <property name="geometry">
+        <rect>
+         <x>168</x>
+         <y>144</y>
+         <width>64</width>
+         <height>24</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="checkBox_5">
+       <property name="geometry">
+        <rect>
+         <x>56</x>
+         <y>176</y>
+         <width>152</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Auto Dew enabled</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_18">
+       <property name="geometry">
+        <rect>
+         <x>240</x>
+         <y>144</y>
+         <width>50</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Set</string>
        </property>
       </widget>
      </widget>
