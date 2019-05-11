@@ -106,9 +106,8 @@ int CSteelDriveII::Connect(const char *pszPort)
 #endif
 
     disableCRC();
-
-    // nErr = getFirmwareVersion(m_szFirmwareVersion, SERIAL_BUFFER_SIZE);
-    nErr = getInfo();
+    nErr = getFirmwareVersion(m_szFirmwareVersion, SERIAL_BUFFER_SIZE);
+    nErr |= getInfo();
     if(nErr)
         nErr = ERR_COMMNOLINK;
 
@@ -136,7 +135,7 @@ int CSteelDriveII::haltFocuser()
 		return ERR_COMMNOLINK;
 
     // abort
-    nErr = SteelDriveIICommand("$BS STOP\n", szResp, SERIAL_BUFFER_SIZE);
+    nErr = SteelDriveIICommand("$BS STOP\r\n", szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
     if(strlen(szResp)) { // sometimes we don't get the reply but "\r" with no data
@@ -171,7 +170,7 @@ int CSteelDriveII::gotoPosition(int nPos)
     if ( nPos > m_SteelDriveInfo.nLimit)
         return ERR_LIMITSEXCEEDED;
 
-    sprintf(szCmd,"$BS GO %d\n", nPos);
+    sprintf(szCmd,"$BS GO %d\r\n", nPos);
     nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
@@ -244,13 +243,35 @@ int CSteelDriveII::isGoToComplete(bool &bComplete)
 int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
 {
     int nErr = BS_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+    std::vector<std::string> svField;
 
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-    strncpy(pszVersion, m_szFirmwareVersion, nStrMaxLen);
-    return nErr;
+    memset(pszVersion, 0, nStrMaxLen);
+    
+    nErr = SteelDriveIICommand("$BS GET VERSION\r\n", szResp, SERIAL_BUFFER_SIZE);
+    if(nErr)
+        return nErr;
 
+    if(strlen(szResp)) {
+        nErr = parseFields(szResp, svField, ':');
+        if(nErr)
+            return nErr;
+        if(svField.size()>1) {
+            strncpy(m_szFirmwareVersion, svField[1].c_str(), SERIAL_BUFFER_SIZE);
+            strncpy(pszVersion, m_szFirmwareVersion, nStrMaxLen);
+        }
+        
+#if defined BS_DEBUG && BS_DEBUG >= 2
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(Logfile, "[%s] [CSteelDriveII::getFirmwareVersion] pszVersion = '%s'\n", timestamp, pszVersion);
+        fflush(Logfile);
+#endif
+    }
     return nErr;
 }
 
@@ -272,7 +293,7 @@ int CSteelDriveII::getInfo()
     fflush(Logfile);
 #endif
 
-    nErr = SteelDriveIICommand("$BS INFO\n", szResp, SERIAL_BUFFER_SIZE);
+    nErr = SteelDriveIICommand("$BS INFO\r\n", szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
 
@@ -280,7 +301,7 @@ int CSteelDriveII::getInfo()
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CSteelDriveII::getInfo] szResp = '%s'\n", timestamp, szResp);
+    fprintf(Logfile, "[%s] [CSteelDriveII::getInfo] szResp = '%s'", timestamp, szResp);
     fflush(Logfile);
 #endif
 
@@ -327,7 +348,7 @@ int CSteelDriveII::getDeviceName(char *pzName, int nStrMaxLen)
     fflush(Logfile);
 #endif
 
-    nErr = SteelDriveIICommand("$BS GET NAME\n", szResp, SERIAL_BUFFER_SIZE);
+    nErr = SteelDriveIICommand("$BS GET NAME\r\n", szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
 
@@ -339,7 +360,7 @@ int CSteelDriveII::getDeviceName(char *pzName, int nStrMaxLen)
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CSteelDriveII::getDeviceName] szResp = '%s'\n", timestamp, szResp);
+    fprintf(Logfile, "[%s] [CSteelDriveII::getDeviceName] szResp = '%s'", timestamp, szResp);
     fflush(Logfile);
 #endif
 
@@ -412,7 +433,7 @@ int CSteelDriveII::setPosition(const int &nPosition)
 		return ERR_COMMNOLINK;
 
     
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET POSITION:%d\n", nPosition);
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET POSITION:%d\r\n", nPosition);
     nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
@@ -450,7 +471,7 @@ int CSteelDriveII::setMaxPosLimit(const int &nLimit)
     if(!m_bIsConnected)
         return ERR_COMMNOLINK;
 
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET LIMIT:%d\n", nLimit);
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET LIMIT:%d\r\n", nLimit);
     nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
@@ -488,7 +509,7 @@ int CSteelDriveII::getUseEndStop(bool &bEnable)
 		return ERR_COMMNOLINK;
 
 	bEnable = false;
-	nErr = SteelDriveIICommand("$BS GET USE_ENDSTOP\n", szResp, SERIAL_BUFFER_SIZE);
+	nErr = SteelDriveIICommand("$BS GET USE_ENDSTOP\r\n", szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
 
@@ -523,7 +544,7 @@ int CSteelDriveII::setUseEndStop(const bool &bEnable)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET USE_ENDSTOP:%s\n", bEnable?"1":"0");
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET USE_ENDSTOP:%s\r\n", bEnable?"1":"0");
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
@@ -543,7 +564,7 @@ int CSteelDriveII::Zeroing()
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	nErr = SteelDriveIICommand("$BS ZEROING\n", szResp, SERIAL_BUFFER_SIZE);
+	nErr = SteelDriveIICommand("$BS ZEROING\r\n", szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
 
@@ -565,7 +586,7 @@ int CSteelDriveII::getJogSteps(int &nStep)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	nErr = SteelDriveIICommand("$BS GET JOGSTEPS\n", szResp, SERIAL_BUFFER_SIZE);
+	nErr = SteelDriveIICommand("$BS GET JOGSTEPS\r\n", szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
 
@@ -620,7 +641,7 @@ int CSteelDriveII::getSingleStep(int &nStep)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	nErr = SteelDriveIICommand("$BS GET SINGLESTEPS\n", szResp, SERIAL_BUFFER_SIZE);
+	nErr = SteelDriveIICommand("$BS GET SINGLESTEPS\r\n", szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
 
@@ -655,7 +676,7 @@ int CSteelDriveII::setSingleStep(const int &nStep)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET SINGLESTEPS:%d\n", nStep);
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET SINGLESTEPS:%d\r\n", nStep);
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
@@ -678,7 +699,7 @@ int CSteelDriveII::getCurrentMove(int &nValue)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	nErr = SteelDriveIICommand("$BS GET CURRENT_MOVE\n", szResp, SERIAL_BUFFER_SIZE);
+	nErr = SteelDriveIICommand("$BS GET CURRENT_MOVE\r\n", szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
 
@@ -713,7 +734,7 @@ int CSteelDriveII::setCurrentMove(const int &nValue)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET CURRENT_MOVE:%d\n", nValue);
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET CURRENT_MOVE:%d\r\n", nValue);
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
@@ -735,7 +756,7 @@ int CSteelDriveII::getCurrentHold(int &nValue)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	nErr = SteelDriveIICommand("$BS GET CURRENT_HOLD\n", szResp, SERIAL_BUFFER_SIZE);
+	nErr = SteelDriveIICommand("$BS GET CURRENT_HOLD\r\n", szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
 
@@ -770,7 +791,7 @@ int CSteelDriveII::setCurrentHold(const int &nValue)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET CURRENT_HOLD:%d\n", nValue);
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET CURRENT_HOLD:%d\r\n", nValue);
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
@@ -791,7 +812,7 @@ int CSteelDriveII::getRCX(const char cChannel, int &nValue)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS GET RC%c\n", cChannel);
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS GET RC%c\r\n", cChannel);
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
@@ -827,7 +848,7 @@ int CSteelDriveII::setRCX(const char cChannel, const int &nValue)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET RC%c:%d\n", cChannel, nValue);
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET RC%c:%d\r\n", cChannel, nValue);
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
@@ -897,7 +918,7 @@ int CSteelDriveII::getTemperatureFromSource(int nSource, double &dTemperature)
 		return ERR_COMMNOLINK;
 
 	// 0 = focuser, 1 = controller
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS GET TEMP%d\n", nSource);
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS GET TEMP%d\r\n", nSource);
 
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
@@ -938,7 +959,7 @@ int CSteelDriveII::enableTempComp(const bool &bEnable)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TCOMP:%s\n", bEnable?"1":"0");
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TCOMP:%s\r\n", bEnable?"1":"0");
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
@@ -959,7 +980,7 @@ int CSteelDriveII::isTempCompEnable(bool &bEnable)
 		return ERR_COMMNOLINK;
 
 	bEnable = false;
-	nErr = SteelDriveIICommand("$BS GET TCOMP\n", szResp, SERIAL_BUFFER_SIZE);
+	nErr = SteelDriveIICommand("$BS GET TCOMP\r\n", szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
 
@@ -993,7 +1014,7 @@ int CSteelDriveII::getTempCompSensorSource(int &nSource)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	nErr = SteelDriveIICommand("$BS GET TCOMP_SENSOR\n", szResp, SERIAL_BUFFER_SIZE);
+	nErr = SteelDriveIICommand("$BS GET TCOMP_SENSOR\r\n", szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
 
@@ -1020,7 +1041,7 @@ int CSteelDriveII::setTempCompSensorSource(const int &nSource)
     if(!m_bIsConnected)
         return ERR_COMMNOLINK;
     
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TCOMP_SENSOR:%d\n", nSource);
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TCOMP_SENSOR:%d\r\n", nSource);
     nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
@@ -1039,7 +1060,7 @@ int CSteelDriveII::getTempCompPeriod(int &nTimeMs)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	nErr = SteelDriveIICommand("$BS GET TCOMP_PERIOD\n", szResp, SERIAL_BUFFER_SIZE);
+	nErr = SteelDriveIICommand("$BS GET TCOMP_PERIOD\r\n", szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
 
@@ -1066,7 +1087,7 @@ int CSteelDriveII::setTempCompPeriod(const int &nTimeMs)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TCOMP_PERIOD:%d\n", nTimeMs);
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TCOMP_PERIOD:%d\r\n", nTimeMs);
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
@@ -1086,7 +1107,7 @@ int CSteelDriveII::pauseTempComp(const bool &bPaused)
     if(!m_bIsConnected)
         return ERR_COMMNOLINK;
     
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TCOMP_PAUSE:%s\n", bPaused?"1":"0");
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TCOMP_PAUSE:%s\r\n", bPaused?"1":"0");
     nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
@@ -1107,7 +1128,7 @@ int CSteelDriveII::isTempCompPaused(bool &bPaused)
         return ERR_COMMNOLINK;
     
     bPaused = false;
-    nErr = SteelDriveIICommand("$BS GET TCOMP_PAUSE\n", szResp, SERIAL_BUFFER_SIZE);
+    nErr = SteelDriveIICommand("$BS GET TCOMP_PAUSE\r\n", szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
     
@@ -1142,7 +1163,7 @@ int CSteelDriveII::setTempCompFactor(const double &dFactor)
     if(!m_bIsConnected)
         return ERR_COMMNOLINK;
     
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TCOMP_FACTOR:%3.2f\n", dFactor);
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TCOMP_FACTOR:%3.2f\r\n", dFactor);
     nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
@@ -1167,7 +1188,7 @@ int CSteelDriveII::getTempCompFactor(double &dFactor)
         return ERR_COMMNOLINK;
     
     // 0 = focuser, 1 = controller
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS GET TCOMP_FACTOR\n");
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS GET TCOMP_FACTOR\r\n");
     
     nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
@@ -1211,7 +1232,7 @@ int CSteelDriveII::getTemperatureOffsetFromSource(int nSource, double &dTemperat
 		return ERR_COMMNOLINK;
 
 	// 0 = focuser, 1 = controller
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS GET TEMP%d_OFS\n", nSource);
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS GET TEMP%d_OFS\r\n", nSource);
 
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
@@ -1256,7 +1277,7 @@ int CSteelDriveII::setTemperatureOffsetForSource(int nSource, double &dTemperatu
 		return ERR_COMMNOLINK;
 
 	// 0 = focuser, 1 = controller
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TEMP%d_OFS:%3.2f\n", nSource, dTemperatureOffset);
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET TEMP%d_OFS:%3.2f\r\n", nSource, dTemperatureOffset);
 
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
@@ -1279,7 +1300,7 @@ int CSteelDriveII::getPIDControl(bool bIsEnabled)
 		return ERR_COMMNOLINK;
 
 	bIsEnabled = false;
-	nErr = SteelDriveIICommand("$BS GET PID_CTRL\n", szResp, SERIAL_BUFFER_SIZE);
+	nErr = SteelDriveIICommand("$BS GET PID_CTRL\r\n", szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
 
@@ -1314,7 +1335,7 @@ int CSteelDriveII::setPIDControl(const bool bEnable)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET PID_CTRL:%s\n", bEnable?"1":"0");
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET PID_CTRL:%s\r\n", bEnable?"1":"0");
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
@@ -1337,7 +1358,7 @@ int CSteelDriveII::getPIDTarget(double &dTarget)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	nErr = SteelDriveIICommand("$BS GET PID_TARGET\n", szResp, SERIAL_BUFFER_SIZE);
+	nErr = SteelDriveIICommand("$BS GET PID_TARGET\r\n", szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
 
@@ -1372,7 +1393,7 @@ int CSteelDriveII::setPIDTarget(const double &dTarget)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET PID_TARGET:%3.2f\n", dTarget);
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET PID_TARGET:%3.2f\r\n", dTarget);
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
@@ -1392,7 +1413,7 @@ int CSteelDriveII::getPIDSensorSource(int &nSource)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	nErr = SteelDriveIICommand("$BS GET PID_SENSOR\n", szResp, SERIAL_BUFFER_SIZE);
+	nErr = SteelDriveIICommand("$BS GET PID_SENSOR\r\n", szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
 
@@ -1419,7 +1440,7 @@ int CSteelDriveII::setPiDSensorSource(const int &nSource)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET PID_SENSOR:%d\n", nSource);
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET PID_SENSOR:%d\r\n", nSource);
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
@@ -1438,7 +1459,7 @@ int CSteelDriveII::getPWM(int &nValue)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	nErr = SteelDriveIICommand("$BS GET PWM\n", szResp, SERIAL_BUFFER_SIZE);
+	nErr = SteelDriveIICommand("$BS GET PWM\r\n", szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
 
@@ -1465,7 +1486,7 @@ int CSteelDriveII::setPWM(const int &nValue)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET PWM:%d\n", nValue);
+	snprintf(szCmd, SERIAL_BUFFER_SIZE, "$BS SET PWM:%d\r\n", nValue);
 	nErr = SteelDriveIICommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 	if(nErr)
 		return nErr;
@@ -1482,7 +1503,7 @@ int CSteelDriveII::disableCRC()
 {
     int nErr = BS_OK;
     char szResp[SERIAL_BUFFER_SIZE];
-    SteelDriveIICommand("$BS CRC_DISABLE*00\n", szResp, SERIAL_BUFFER_SIZE);
+    SteelDriveIICommand("$BS CRC_DISABLE\r\n", szResp, SERIAL_BUFFER_SIZE);
     if(strstr(szResp, "ERROR"))
         return ERR_CMDFAILED;
     return nErr;
@@ -1546,7 +1567,7 @@ int CSteelDriveII::SteelDriveIICommand(const char *pszCmd, char *pszResult, int 
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand response '%s'\n", timestamp, szResp);
+            fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand response '%s'", timestamp, szResp);
             fflush(Logfile);
 #endif
         }
