@@ -277,7 +277,6 @@ int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
 
 int CSteelDriveII::getInfo()
 {
-
     int nErr = BS_OK;
     char szResp[SERIAL_BUFFER_SIZE];
     std::vector<std::string> svFields;
@@ -329,6 +328,88 @@ int CSteelDriveII::getInfo()
         m_SteelDriveInfo.nLimit = std::stoi(svField[1]);
 
     return nErr;
+}
+
+int CSteelDriveII::getSummary()
+{
+	int nErr = BS_OK;
+	char szResp[SERIAL_BUFFER_SIZE];
+	std::vector<std::string> svFields;
+	std::vector<std::string> svField;
+	if(!m_bIsConnected)
+		return ERR_COMMNOLINK;
+
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getInfo]\n", timestamp);
+	fflush(Logfile);
+#endif
+
+	nErr = SteelDriveIICommand("$BS SUMMARY\r\n", szResp, SERIAL_BUFFER_SIZE);
+	if(nErr)
+		return nErr;
+
+#if defined BS_DEBUG && BS_DEBUG >= 2
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] [CSteelDriveII::getSummary] szResp = '%s'", timestamp, szResp);
+	fflush(Logfile);
+#endif
+
+	// parse summary
+	nErr = parseFields(szResp, svFields, ';');
+	if(nErr)
+		return nErr;
+	if(svFields.size()<4)
+		return ERR_CMDFAILED;
+
+	nErr = parseFields(svFields[0], svField, ':');
+	if(svField.size()>1)
+		m_SteelDriveInfo.sName = svField[1];
+
+	nErr = parseFields(svFields[1], svField, ':');
+	if(svField.size()>1)
+		m_SteelDriveInfo.nPos = std::stoi(svField[1]);
+
+	nErr = parseFields(svFields[2], svField, ':');
+	if(svField.size()>1) {
+		if(svField[1] == "STOPPED")
+	    	m_SteelDriveInfo.nState = STOPPED;
+	}
+
+	nErr = parseFields(svFields[3], svField, ':');
+	if(svField.size()>1)
+		m_SteelDriveInfo.nLimit = std::stoi(svField[1]);
+
+	nErr = parseFields(svFields[4], svField, ':');
+	if(svField.size()>1)
+		m_SteelDriveInfo.nFocus = std::stoi(svField[1]);
+
+	nErr = parseFields(svFields[5], svField, ':');
+	if(svField.size()>1)
+		m_SteelDriveInfo.dTemp0 = std::stod(svField[1]);
+
+	nErr = parseFields(svFields[6], svField, ':');
+	if(svField.size()>1)
+		m_SteelDriveInfo.dTemp1 = std::stod(svField[1]);
+
+	nErr = parseFields(svFields[7], svField, ':');
+	if(svField.size()>1)
+		m_SteelDriveInfo.dTempAve = std::stod(svField[1]);
+
+	nErr = parseFields(svFields[8], svField, ':');
+	if(svField.size()>1)
+		m_SteelDriveInfo.bTcomp = (svField[1] == "0"?false:true);
+
+	nErr = parseFields(svFields[9], svField, ':');
+	if(svField.size()>1)
+		m_SteelDriveInfo.nPwm = std::stoi(svField[1]);
+
+	return nErr;
+
 }
 
 int CSteelDriveII::getDeviceName(char *pzName, int nStrMaxLen)

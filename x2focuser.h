@@ -174,8 +174,8 @@ private:
 	bool                                    m_bLinked;
 	int                                     m_nPosition;
     double                                  m_fLastTemp;
-    CSteelDriveII                             m_SteelDriveII;
-
+    CSteelDriveII                           m_SteelDriveII;
+	bool									m_bUseEndStop;
     int                                     m_nCalibrationStep;
     SerXInterface::Parity                   m_nParity;
     int                                     m_nCurrentDialog;

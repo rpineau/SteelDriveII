@@ -32,11 +32,19 @@
 
 enum BS_Errors		{BS_OK = 0, NOT_CONNECTED, ND_CANT_CONNECT, BS_BAD_CMD_RESPONSE, COMMAND_FAILED};
 enum TempSourses	{FOCUSER = 0, CONTROLLER, BOTH};
+enum FocState		{STOPPED = 0};
 
 typedef struct {
     std::string     sName;
     int             nPos;
     int             nLimit;
+	int				nState;
+	int				nFocus;
+	double			dTemp0;
+	double			dTemp1;
+	double			dTempAve;
+	bool			bTcomp;
+	int				nPwm;
 } SteelDriveInfo;
 
 class CSteelDriveII
@@ -63,7 +71,6 @@ public:
     void	setDebugLog(bool bEnable) {m_bDebugLog = bEnable; };
 
     int		getFirmwareVersion(char *pszVersion, int nStrMaxLen);
-    int		getInfo(void);
     int		getDeviceName(char *pzName, int nStrMaxLen);
 
     int		getPosition(int &nPosition);
@@ -145,6 +152,9 @@ protected:
     std::string&	ltrim(std::string &str, const std::string &filter);
     std::string&	rtrim(std::string &str, const std::string &filter);
     int				disableCRC();
+	int				getInfo(void);
+	int				getSummary(void);
+
 
 
     SerXInterface   	*m_pSerx;

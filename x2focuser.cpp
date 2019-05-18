@@ -219,12 +219,8 @@ int	X2Focuser::execModalSettingsDialog(void)
 		m_SteelDriveII.getPosition(m_nPosition);
         dx->setPropertyInt("newPos", "value", m_nPosition);
 
-		m_SteelDriveII.getUseEndStop(bTmp);
-		dx->setChecked(USE_END_STOP, bTmp?1:0);
-        if(bTmp)
-            dx->setEnabled(INITIATE_ZEROING, true);
-        else
-            dx->setEnabled(INITIATE_ZEROING, false);
+		m_SteelDriveII.getUseEndStop(m_bUseEndStop);
+		dx->setChecked(USE_END_STOP, m_bUseEndStop?1:0);
 
 		m_SteelDriveII.isTempCompEnable(bTmp);
 		dx->setChecked(ENABLE_TEMP_COMP, bTmp?1:0);
@@ -367,6 +363,10 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 			snprintf(szTmp, LOG_BUFFER_SIZE, "Error Zeroing focuser : %d", nErr);
 			uiex->messageBox("Error", szTmp);
 		}
+		m_pSleeper->sleep(1000);
+		m_SteelDriveII.getPosition(m_nPosition);
+		snprintf(szTmp, LOG_BUFFER_SIZE, "%d", m_nPosition);
+		uiex->setPropertyString("currentPos", "text", szTmp);
 	}
 
 	else if	(!strcmp(pszEvent, SET_MAX_POS_CLICKED)) {
@@ -522,6 +522,8 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 		}
 	}
 
+	// dew heater settings
+
 	else if	(!strcmp(pszEvent, SET_PWM_DEW_HEATER_CLICKED)) {
 		uiex->propertyInt("PwmOutputPercent", "value", nTmp);
 		nErr = m_SteelDriveII.setPWM(nTmp);
@@ -530,6 +532,40 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 			uiex->messageBox("Error", szTmp);
 		}
 	}
+
+	else if	(!strcmp(pszEvent, SET_DEW_TEMP_SOURCE_FOC_CLICKED)) {
+		nErr = m_SteelDriveII.setPiDSensorSource(FOCUSER);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting Dew temp source to focuser sensor : %d",  nErr);
+			uiex->messageBox("Error", szTmp);
+		}
+	}
+
+	else if	(!strcmp(pszEvent, SET_DEW_TEMP_SOURCE_CTRL_CLICKED)) {
+		nErr = m_SteelDriveII.setPiDSensorSource(CONTROLLER);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting Dew temp source to focuser sensor : %d",  nErr);
+			uiex->messageBox("Error", szTmp);
+		}
+	}
+
+	else if	(!strcmp(pszEvent, SET_DEW_TEMP_OFFSET_CLICKED)) {
+		uiex->propertyDouble("pidDewOffset", "value", dTmp);
+		nErr = m_SteelDriveII.setPidDewTemperatureOffset(dTmp);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the Dew temperature offset) : %d", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
+	}
+
+	else if	(!strcmp(pszEvent, ENABLE_AUTO_DEW_CLICKED)) {
+		nErr = m_SteelDriveII.enableAutoDew(uiex->isChecked(ENABLE_AUTO_DEW_COMP)==1?true:false);
+		if(nErr) {
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error %s auto dew : %d", uiex->isChecked(ENABLE_TEMP_COMP)==1?"enabling":"disabling", nErr);
+			uiex->messageBox("Error", szTmp);
+		}
+	}
+
 }
 
 void X2Focuser::setMainDialogControlState(X2GUIExchangeInterface* uiex, bool enabled)
