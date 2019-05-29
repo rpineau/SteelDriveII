@@ -30,7 +30,7 @@
 #define SERIAL_BUFFER_SIZE 256
 #define LOG_BUFFER_SIZE 256
 
-enum BS_Errors		{BS_OK = 0, NOT_CONNECTED, ND_CANT_CONNECT, BS_BAD_CMD_RESPONSE, COMMAND_FAILED, NO_CRC, CRC_ERROR};
+enum BS_Errors		{BS_OK = 0, NOT_CONNECTED, ND_CANT_CONNECT, BS_BAD_CMD_RESPONSE, COMMAND_FAILED, ECHO_ERR, NO_CRC, CRC_ERROR};
 enum TempSourses	{FOCUSER = 0, CONTROLLER, BOTH};
 enum FocState		{STOPPED = 0};
 
@@ -180,8 +180,10 @@ public:
 
 protected:
 
-    int				SteelDriveIICommand(const char *pszCmd, char *pszResult, int nResultMaxLen);
-    int				readResponse(char *pszRespBuffer, int nBufferLen);
+	int				SteelDriveIICommand(std::string sCmd, std::string &sResult);
+	
+    // int				readResponse(char *pszRespBuffer, int nBufferLen);
+	int				readResponse(std::string &RespBuffer);
     int				parseFields(const char *pszIn, std::vector<std::string> &svFields, char cSeparator);
     int				parseFields(std::string sIn, std::vector<std::string> &svFields, char cSeparator);
     std::string&	trim(std::string &str, const std::string &filter );
