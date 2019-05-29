@@ -16,6 +16,7 @@
 #include <exception>
 #include <typeinfo>
 #include <stdexcept>
+#include <iomanip>
 
 #include "../../licensedinterfaces/sberrorx.h"
 #include "../../licensedinterfaces/serxinterface.h"

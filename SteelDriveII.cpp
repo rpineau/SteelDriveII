@@ -1242,13 +1242,13 @@ int CSteelDriveII::setTempCompFactor(const double &dFactor)
     int nErr = BS_OK;
 	std::string sResp;
 	std::string sCmd;
-	char	szBuf[SERIAL_BUFFER_SIZE];
+	std::ostringstream floatFormater;
 
     if(!m_bIsConnected)
         return ERR_COMMNOLINK;
 
-	snprintf(szBuf, SERIAL_BUFFER_SIZE, "$BS SET TCOMP_FACTOR:%3.2f", dFactor);
-	sCmd.assign(szBuf);
+	floatFormater << std::setprecision(2) << dFactor;
+	sCmd = "$BS SET TCOMP_FACTOR:" + floatFormater.str();
 
     nErr = SteelDriveIICommand(sCmd, sResp);
     if(nErr)
@@ -1348,7 +1348,7 @@ int CSteelDriveII::setTemperatureOffsetForSource(int nSource, double &dTemperatu
 	int nErr = SB_OK;
 	std::string sResp;
 	std::string sCmd;
-	char szBuf[SERIAL_BUFFER_SIZE];
+	std::ostringstream floatFormater;
 	std::vector<std::string> vFieldsData;
 	std::vector<std::string> vNameField;
 
@@ -1356,8 +1356,8 @@ int CSteelDriveII::setTemperatureOffsetForSource(int nSource, double &dTemperatu
 		return ERR_COMMNOLINK;
 
 	// 0 = focuser, 1 = controller
-	snprintf(szBuf, SERIAL_BUFFER_SIZE, "$BS SET TEMP%d_OFS:%3.2f", nSource, dTemperatureOffset);
-	sCmd.assign(szBuf);
+	floatFormater << std::setprecision(2) << dTemperatureOffset;
+	sCmd = "$BS SET TEMP" + std::to_string(nSource) + "_OFS:" + floatFormater.str();
 	nErr = SteelDriveIICommand(sCmd, sResp);
 	if(nErr)
 		return nErr;
@@ -1466,13 +1466,13 @@ int CSteelDriveII::setPIDTarget(const double &dTarget)
 	int nErr = BS_OK;
 	std::string sResp;
 	std::string sCmd;
-	char szBuf[SERIAL_BUFFER_SIZE];
+	std::ostringstream floatFormater;
 
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szBuf, SERIAL_BUFFER_SIZE, "$BS SET PID_TARGET:%3.2f", dTarget);
-	sCmd.assign(szBuf);
+	floatFormater << std::setprecision(2) << dTarget;
+	sCmd = "$BS SET PID_TARGET:" + floatFormater.str();
 	nErr = SteelDriveIICommand(sCmd, sResp);
 	if(nErr)
 		return nErr;
@@ -1670,13 +1670,13 @@ int CSteelDriveII::setPidDewTemperatureOffset(const double &dOffset)
 	int nErr = BS_OK;
 	std::string sResp;
 	std::string sCmd;
-	char szBuf[SERIAL_BUFFER_SIZE];
+	std::ostringstream floatFormater;
 
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	snprintf(szBuf, SERIAL_BUFFER_SIZE, "$BS SET PID_DEW_OFS:%3.2f", dOffset);
-	sCmd.assign(szBuf);
+	floatFormater << std::setprecision(2) << dOffset;
+	sCmd = "$BS SET PID_DEW_OFS:" + floatFormater.str();
 	nErr = SteelDriveIICommand(sCmd, sResp);
 	if(nErr)
 		return nErr;
@@ -1777,7 +1777,6 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 {
 	int nErr = BS_OK;
 	char szResp[SERIAL_BUFFER_SIZE];
-	char szTmp[SERIAL_BUFFER_SIZE];
 	unsigned long  ulBytesWrite;
 	std::string sEcho;
 	std::string sResp;
@@ -1792,9 +1791,11 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 
 	if(m_bCrcEnabled) {
 		//compute and add CRC
+		std::stringstream ss;
 		nCRC = crc8((uint8_t *)sCmd.c_str(), sCmd.size());
-		snprintf(szTmp, SERIAL_BUFFER_SIZE, "*%02X",nCRC);
-		sCmd.append(szTmp);
+		ss << std::hex << nCRC;
+		// snprintf(szTmp, SERIAL_BUFFER_SIZE, "*%02X",nCRC);
+		sCmd += "*" + ss.str();
 	}
 
 	// add \r\n
@@ -1821,8 +1822,6 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 		return nErr;
 	// check echo
 	sEcho = trim(sEcho," \n\r");
-	sCmd.assign(szTmp);
-
 	if(sCmd != sEcho)
 		return ECHO_ERR;
 
