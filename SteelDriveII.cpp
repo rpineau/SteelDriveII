@@ -1805,7 +1805,7 @@ int CSteelDriveII::SteelDriveIICommand(const char *pszCmd, char *pszResult, int 
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand Sending '%s'\n", timestamp, pszCmd);
+	fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] Sending '%s'\n", timestamp, pszCmd);
 	fflush(Logfile);
 #endif
 
@@ -1840,11 +1840,19 @@ int CSteelDriveII::SteelDriveIICommand(const char *pszCmd, char *pszResult, int 
                 ltime = time(NULL);
                 timestamp = asctime(localtime(&ltime));
                 timestamp[strlen(timestamp) - 1] = 0;
-                fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand response Error : %d\n", timestamp, nErr);
+                fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] response Error : %d\n", timestamp, nErr);
                 fflush(Logfile);
 #endif
                 return nErr;
             }
+#if defined BS_DEBUG && BS_DEBUG >= 2
+			ltime = time(NULL);
+			timestamp = asctime(localtime(&ltime));
+			timestamp[strlen(timestamp) - 1] = 0;
+			fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] response  : %s\n", timestamp, szResp);
+			fflush(Logfile);
+#endif
+
 			// check CRC
 			if(m_bCrcEnabled) {
 				nErr = parseFields(szResp, svField, '*');
@@ -1856,9 +1864,9 @@ int CSteelDriveII::SteelDriveIICommand(const char *pszCmd, char *pszResult, int 
 					ltime = time(NULL);
 					timestamp = asctime(localtime(&ltime));
 					timestamp[strlen(timestamp) - 1] = 0;
-					fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand response CRC : %s\n", timestamp, svField[0].c_str());
-					fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand computed CRC : %02X\n", timestamp, nRespCRC);
-					fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand computed CRC : %02X\n", timestamp, (uint8_t)std::stoul(svField[1], 0, 16));
+					fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand]  response CRC : %s\n", timestamp, svField[1].c_str());
+					fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] converted CRC : %02X\n", timestamp, (uint8_t)std::stoul(svField[1], 0, 16));
+					fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand]  computed CRC : %02X\n", timestamp, nRespCRC);
 					fflush(Logfile);
 #endif
 					if(nRespCRC != (uint8_t)std::stoul(svField[1], nullptr, 16)) {
@@ -1874,7 +1882,7 @@ int CSteelDriveII::SteelDriveIICommand(const char *pszCmd, char *pszResult, int 
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(Logfile, "[%s] CSteelDriveII::SteelDriveIICommand response '%s'", timestamp, szResp);
+            fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] response '%s'", timestamp, szResp);
             fflush(Logfile);
 #endif
         }
@@ -1919,7 +1927,7 @@ int CSteelDriveII::readResponse(char *pszRespBuffer, int nBufferLen)
 			ltime = time(NULL);
 			timestamp = asctime(localtime(&ltime));
 			timestamp[strlen(timestamp) - 1] = 0;
-			fprintf(Logfile, "[%s] CSteelDriveII::readResponse timeout\n", timestamp);
+			fprintf(Logfile, "[%s] [CSteelDriveII::readResponse] timeout\n", timestamp);
 			fflush(Logfile);
 #endif
             nErr = ERR_NORESPONSE;
