@@ -1780,7 +1780,6 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 	unsigned long  ulBytesWrite;
 	std::string sEcho;
 	std::string sResp;
-	uint8_t nCRC = 0;
 	uint8_t nRespCRC = 0;
 	std::vector<std::string> svField;
 
@@ -1792,10 +1791,10 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 	if(m_bCrcEnabled) {
 		//compute and add CRC
 		std::stringstream ss;
-		nCRC = crc8((uint8_t *)sCmd.c_str(), sCmd.size());
-		ss << std::hex << nCRC;
+		ss << std::hex << +crc8((uint8_t *)sCmd.c_str(), sCmd.size());
 		// snprintf(szTmp, SERIAL_BUFFER_SIZE, "*%02X",nCRC);
 		sCmd += "*" + ss.str();
+        std::transform(sCmd.begin(), sCmd.end(),sCmd.begin(), ::toupper);
 	}
 
 	// add \r\n
