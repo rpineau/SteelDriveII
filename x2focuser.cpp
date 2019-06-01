@@ -27,7 +27,6 @@ X2Focuser::X2Focuser(const char* pszDisplayName,
 
     // Read in settings
     if (m_pIniUtil) {
-		// m_nTempSource = m_pIniUtil->readInt(PARENT_KEY, TEMP_SOURCE, 0); // default to focuser
     }
 	m_SteelDriveII.SetSerxPointer(m_pSerX);
     m_SteelDriveII.SetSleeperPointer(m_pSleeper);
@@ -348,16 +347,6 @@ int	X2Focuser::execModalSettingsDialog(void)
 
     //Retreive values from the user interface
     if (bPressedOK) {
-		if(m_pIniUtil) {
-            if(dx->isChecked(SET_DEW_TEMP_SOURCE_FOC))
-                m_nTempSource = FOCUSER;
-            else if (dx->isChecked(SET_DEW_TEMP_SOURCE_CTRL))
-                m_nTempSource = CONTROLLER;
-            else if (dx->isChecked(SET_TEMP_SOURCE_BOTH))
-                m_nTempSource = BOTH;
-
-			// nErr = m_pIniUtil->writeInt(PARENT_KEY, TEMP_SOURCE, m_nTempSource);
-		}
     }
     return nErr;
 }
@@ -368,27 +357,22 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
     int nTmp = 0;
     double dTmp = 0.0f;
     char szTmp[LOG_BUFFER_SIZE];
-
-    printf("pszEvent = '%s'\n", pszEvent);
     
 	// focuserTemp and controllerTemp update  in timer
 	if (!strcmp(pszEvent, "on_timer")) {
 		m_SteelDriveII.getTemperatureFromSource(FOCUSER, dTmp);
         snprintf(szTmp, LOG_BUFFER_SIZE, "%3.2f", dTmp);
 		uiex->setText("focuserTemp", szTmp);
-		m_SteelDriveII.getTemperatureFromSource(CONTROLLER, dTmp);
+
+        m_SteelDriveII.getTemperatureFromSource(CONTROLLER, dTmp);
         snprintf(szTmp, LOG_BUFFER_SIZE, "%3.2f", dTmp);
         uiex->setText("controllerTemp", szTmp);
+
+        nErr =  m_SteelDriveII.getPosition(m_nPosition);
+        snprintf(szTmp, LOG_BUFFER_SIZE, "%d", m_nPosition);
+        uiex->setPropertyString("currentPos", "text", szTmp);
 	}
 	// Positions
-	else if (!strcmp(pszEvent, SET_CURRENT_AS_MAX_CLICKED)) {
-		nErr = m_SteelDriveII.setCurrentPosAsMax();
-		if(nErr) {
-			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the current position as the maximum position : %d", nErr);
-			uiex->messageBox("Error", szTmp);
-		}
-	}
-
 	else if	(!strcmp(pszEvent, INITIATE_ZEROING_CLICKED)) {
 		nErr = m_SteelDriveII.Zeroing();
 		if(nErr) {
@@ -598,7 +582,6 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 void X2Focuser::setMainDialogControlState(X2GUIExchangeInterface* uiex, bool enabled)
 {
 	// buttons, checkbox, radio buttons
-    uiex->setEnabled(SET_CURRENT_AS_MAX, enabled);
 	uiex->setEnabled(INITIATE_ZEROING, enabled);
 	uiex->setEnabled(SET_MAX_POS, enabled);
 	uiex->setEnabled(SYNC_TO_POS, enabled);

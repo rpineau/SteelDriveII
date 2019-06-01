@@ -39,7 +39,6 @@ class TickCountInterface;
 
 #define PARENT_KEY			"SteelDriveII"
 #define CHILD_KEY_PORTNAME	"PortName"
-#define TEMP_SOURCE          "TempSource"
 
 #if defined(SB_WIN_BUILD)
 #define DEF_PORT_NAME					"COM1"
