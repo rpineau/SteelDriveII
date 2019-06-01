@@ -1821,9 +1821,16 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 		return nErr;
 	// check echo
 	sEcho = trim(sEcho," \n\r");
-	if(sCmd != sEcho)
+    if(sCmd != sEcho) {
+#if defined BS_DEBUG && BS_DEBUG >= 2
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] ECHO Error : %s\n", timestamp, sEcho.c_str());
+        fflush(Logfile);
+#endif
 		return ECHO_ERR;
-
+    }
 	// read response
 	nErr = readResponse(sResp);
 	sResp = trim(sResp," \r\n");
