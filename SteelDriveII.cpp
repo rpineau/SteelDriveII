@@ -69,7 +69,8 @@ CSteelDriveII::~CSteelDriveII()
 int CSteelDriveII::Connect(const char *pszPort)
 {
     int nErr = BS_OK;
-
+    std::string sDummy;
+    
     if(!m_pSerx)
         return ERR_COMMNOLINK;
 
@@ -105,7 +106,21 @@ int CSteelDriveII::Connect(const char *pszPort)
 	fflush(Logfile);
 #endif
 
-    disableCRC();
+    // read hello world
+    m_pSleeper->sleep(1000);
+    readResponse(sDummy);
+#ifdef BS_DEBUG
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CSteelDriveII::Connect] sDummy = '%s'\n", timestamp, sDummy.c_str());
+    fflush(Logfile);
+#endif
+    if(m_bCrcEnabled)
+        enableCRC();
+    else
+        disableCRC();
+
     nErr = getFirmwareVersion(m_szFirmwareVersion, SERIAL_BUFFER_SIZE);
     nErr |= getInfo();
     if(nErr)
@@ -298,7 +313,7 @@ int CSteelDriveII::getInfo()
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CSteelDriveII::getInfo] szResp = '%s'", timestamp, sResp.c_str());
+    fprintf(Logfile, "[%s] [CSteelDriveII::getInfo] sResp = '%s'\n", timestamp, sResp.c_str());
     fflush(Logfile);
 #endif
 
@@ -353,7 +368,7 @@ int CSteelDriveII::getSummary()
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(Logfile, "[%s] [CSteelDriveII::getSummary] szResp = '%s'", timestamp, sResp.c_str());
+	fprintf(Logfile, "[%s] [CSteelDriveII::getSummary] sResp = '%s'\n", timestamp, sResp.c_str());
 	fflush(Logfile);
 #endif
 
@@ -439,7 +454,7 @@ int CSteelDriveII::getDeviceName(char *pzName, int nStrMaxLen)
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CSteelDriveII::getDeviceName] szResp = '%s'", timestamp, sResp.c_str());
+    fprintf(Logfile, "[%s] [CSteelDriveII::getDeviceName] sResp = '%s'\n", timestamp, sResp.c_str());
     fflush(Logfile);
 #endif
 
@@ -495,7 +510,7 @@ int CSteelDriveII::getPosition(int &nPosition)
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CSteelDriveII::getPosition]  m_nCurPos = %d \n", timestamp, m_SteelDriveInfo.nPos);
+    fprintf(Logfile, "[%s] [CSteelDriveII::getPosition]  m_nCurPos = %d\n", timestamp, m_SteelDriveInfo.nPos);
     fflush(Logfile);
 #endif
     return nErr;
@@ -512,7 +527,7 @@ int CSteelDriveII::setPosition(const int &nPosition)
 		return ERR_COMMNOLINK;
 
 
-	sCmd = "$BS SET POSITION:" + std::to_string(nPosition);
+	sCmd = "$BS SET POS:" + std::to_string(nPosition);
 
     nErr = SteelDriveIICommand(sCmd, sResp);
     if(nErr)
@@ -625,7 +640,7 @@ int CSteelDriveII::setUseEndStop(const bool &bEnable)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	sCmd = "BS SET USE_ENDSTOP:" + std::to_string(bEnable?1:0);
+	sCmd = "$BS SET USE_ENDSTOP:" + std::to_string(bEnable?1:0);
 	nErr = SteelDriveIICommand(sCmd, sResp);
 	if(nErr)
 		return nErr;
@@ -1766,6 +1781,7 @@ int CSteelDriveII::enableCRC()
 	int nErr = BS_OK;
 	std::string sResp;
 
+    m_bCrcEnabled = false;
 	SteelDriveIICommand("$BS CRC_ENABLE", sResp);
 	if(sResp.find("ERROR") != -1)
 		return ERR_CMDFAILED;
@@ -1776,13 +1792,12 @@ int CSteelDriveII::enableCRC()
 int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 {
 	int nErr = BS_OK;
-	char szResp[SERIAL_BUFFER_SIZE];
 	unsigned long  ulBytesWrite;
 	std::string sEcho;
 	std::string sResp;
 	uint8_t nRespCRC = 0;
 	std::vector<std::string> svField;
-
+    
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
@@ -1792,9 +1807,7 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 		//compute and add CRC
 		std::stringstream ss;
 		ss << std::hex << +crc8((uint8_t *)sCmd.c_str(), sCmd.size());
-		// snprintf(szTmp, SERIAL_BUFFER_SIZE, "*%02X",nCRC);
 		sCmd += "*" + ss.str();
-        std::transform(sCmd.begin(), sCmd.end(),sCmd.begin(), ::toupper);
 	}
 
 	// add \r\n
@@ -1804,7 +1817,7 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] Sending '%s'", timestamp, sCmd.c_str());
+	fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] Sending '%s'\n", timestamp, sCmd.c_str());
 	fflush(Logfile);
 #endif
 
@@ -1821,14 +1834,17 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 		return nErr;
 	// check echo
 	sEcho = trim(sEcho," \n\r");
+    sCmd = trim(sCmd," \n\r");
     if(sCmd != sEcho) {
 #if defined BS_DEBUG && BS_DEBUG >= 2
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] ECHO Error : %s\n", timestamp, sEcho.c_str());
+        fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] ECHO Error : '%s'\n", timestamp, sEcho.c_str());
+        fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] sCmd       : '%s'\n", timestamp, sCmd.c_str());
         fflush(Logfile);
 #endif
+        m_pSerx->purgeTxRx();
 		return ECHO_ERR;
     }
 	// read response
@@ -1854,7 +1870,7 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 
 	// check CRC
 	if(m_bCrcEnabled) {
-		nErr = parseFields(szResp, svField, '*');
+		nErr = parseFields(sResp, svField, '*');
 		if(nErr)
 			return nErr;
 		if(svField.size()>1) {
@@ -1864,8 +1880,8 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 			timestamp = asctime(localtime(&ltime));
 			timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand]  response CRC : %s\n", timestamp, svField[1].c_str());
-			fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] converted CRC : %02X\n", timestamp, (uint8_t)std::stoul(svField[1], 0, 16));
-			fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand]  computed CRC : %02X\n", timestamp, nRespCRC);
+			fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] converted CRC : %x\n", timestamp, (uint8_t)std::stoul(svField[1], 0, 16));
+			fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand]  computed CRC : %x\n", timestamp, nRespCRC);
 			fflush(Logfile);
 #endif
 			if(nRespCRC != (uint8_t)std::stoul(svField[1], nullptr, 16)) {
@@ -1879,15 +1895,8 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 			return NO_CRC;
 		}
 	}
-#if defined BS_DEBUG && BS_DEBUG >= 3
-	ltime = time(NULL);
-	timestamp = asctime(localtime(&ltime));
-	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] response '%s'", timestamp, szResp);
-	fflush(Logfile);
-#endif
 
-	// copy response(s) to result string
+    // copy response(s) to result string
 	sResult.assign(sResp);
 
 	m_pSerx->purgeTxRx();   // purge data we don't want.

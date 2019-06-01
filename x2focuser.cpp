@@ -27,7 +27,7 @@ X2Focuser::X2Focuser(const char* pszDisplayName,
 
     // Read in settings
     if (m_pIniUtil) {
-		m_nTempSource = m_pIniUtil->readInt(PARENT_KEY, TEMP_SOURCE, 0); // default to focuser
+		// m_nTempSource = m_pIniUtil->readInt(PARENT_KEY, TEMP_SOURCE, 0); // default to focuser
     }
 	m_SteelDriveII.SetSerxPointer(m_pSerX);
     m_SteelDriveII.SetSleeperPointer(m_pSleeper);
@@ -274,6 +274,22 @@ int	X2Focuser::execModalSettingsDialog(void)
 		m_SteelDriveII.getPWM(nTmp);
 		dx->setPropertyInt("PwmOutputPercent", "value", nTmp);
 
+        m_SteelDriveII.getPIDSensorSource(nTmp);
+        switch(nTmp) {
+            case FOCUSER :
+                dx->setChecked(SET_PID_TEMP_SOURCE_FOC, 1);
+                break;
+            case CONTROLLER :
+                dx->setChecked(SET_PID_TEMP_SOURCE_CTRL, 1);
+                break;
+            case BOTH :
+                dx->setChecked(SET_PID_TEMP_SOURCE_BOTH, 1);
+                break;
+            default:
+                dx->setChecked(SET_PID_TEMP_SOURCE_FOC, 1);
+                break;
+        }
+        
 		m_SteelDriveII.getTempAmbienSensorSource(nTmp);
 		switch(nTmp) {
 			case FOCUSER :
@@ -287,7 +303,7 @@ int	X2Focuser::execModalSettingsDialog(void)
 				break;
 		}
 		m_SteelDriveII.getPidDewTemperatureOffset(dTmp);
-		dx->setPropertyDouble("focTempOffset", "value", dTmp);
+		dx->setPropertyDouble("pidDewOffset", "value", dTmp);
 
 		m_SteelDriveII.isAutoDewEnable(bTmp);
 		dx->setChecked(ENABLE_AUTO_DEW_COMP, bTmp?1:0);
@@ -321,12 +337,15 @@ int	X2Focuser::execModalSettingsDialog(void)
 
     //Retreive values from the user interface
     if (bPressedOK) {
-        // read current values
-        dx->propertyInt("accelerationCurrent", "value", nTmp);
-        dx->propertyInt("holdCurrent", "value", nTmp);
-        m_SteelDriveII.setCurrentHold(nTmp);
 		if(m_pIniUtil) {
-			nErr = m_pIniUtil->writeInt(PARENT_KEY, TEMP_SOURCE, m_nTempSource);
+            if(dx->isChecked(SET_DEW_TEMP_SOURCE_FOC))
+                m_nTempSource = FOCUSER;
+            else if (dx->isChecked(SET_DEW_TEMP_SOURCE_CTRL))
+                m_nTempSource = CONTROLLER;
+            else if (dx->isChecked(SET_TEMP_SOURCE_BOTH))
+                m_nTempSource = BOTH;
+
+			// nErr = m_pIniUtil->writeInt(PARENT_KEY, TEMP_SOURCE, m_nTempSource);
 		}
     }
     return nErr;
@@ -339,6 +358,8 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
     double dTmp = 0.0f;
     char szTmp[LOG_BUFFER_SIZE];
 
+    printf("pszEvent = '%s'\n", pszEvent);
+    
 	// focuserTemp and controllerTemp update  in timer
 	if (!strcmp(pszEvent, "on_timer")) {
 		m_SteelDriveII.getTemperatureFromSource(FOCUSER, dTmp);
@@ -393,11 +414,6 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 
 	else if	(!strcmp(pszEvent, USE_END_STOP_CLICKED)) {
 		nErr = m_SteelDriveII.setUseEndStop(uiex->isChecked(USE_END_STOP)==1?true:false);
-        if(uiex->isChecked(USE_END_STOP))
-            uiex->setEnabled(INITIATE_ZEROING, true);
-        else
-            uiex->setEnabled(INITIATE_ZEROING, false);
-
 		if(nErr) {
 			snprintf(szTmp, LOG_BUFFER_SIZE, "Error changing end stop use : %d", nErr);
 			uiex->messageBox("Error", szTmp);
@@ -534,7 +550,7 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	}
 
 	else if	(!strcmp(pszEvent, SET_DEW_TEMP_SOURCE_FOC_CLICKED)) {
-		nErr = m_SteelDriveII.setPiDSensorSource(FOCUSER);
+		nErr = m_SteelDriveII.setTempAmbienSensorSource(FOCUSER);
 		if(nErr) {
 			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting Dew temp source to focuser sensor : %d",  nErr);
 			uiex->messageBox("Error", szTmp);
@@ -542,7 +558,7 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	}
 
 	else if	(!strcmp(pszEvent, SET_DEW_TEMP_SOURCE_CTRL_CLICKED)) {
-		nErr = m_SteelDriveII.setPiDSensorSource(CONTROLLER);
+		nErr = m_SteelDriveII.setTempAmbienSensorSource(CONTROLLER);
 		if(nErr) {
 			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting Dew temp source to focuser sensor : %d",  nErr);
 			uiex->messageBox("Error", szTmp);

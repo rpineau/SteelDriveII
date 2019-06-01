@@ -147,7 +147,7 @@
         <number>5000000</number>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_4">
+      <widget class="QPushButton" name="pushButton">
        <property name="geometry">
         <rect>
          <x>32</x>
@@ -160,7 +160,7 @@
         <string>Set current position as maximum</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_6">
+      <widget class="QPushButton" name="pushButton_3">
        <property name="geometry">
         <rect>
          <x>232</x>
@@ -205,7 +205,7 @@
         <number>5000000</number>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_7">
+      <widget class="QPushButton" name="pushButton_4">
        <property name="geometry">
         <rect>
          <x>232</x>
@@ -218,7 +218,7 @@
         <string>Set</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_5">
+      <widget class="QPushButton" name="pushButton_2">
        <property name="geometry">
         <rect>
          <x>32</x>
@@ -552,7 +552,7 @@
        <property name="title">
         <string>PID Temperature  sensor</string>
        </property>
-       <widget class="QRadioButton" name="radioButton_7">
+       <widget class="QRadioButton" name="radioButton_4">
         <property name="geometry">
          <rect>
           <x>8</x>
@@ -565,7 +565,7 @@
          <string>Focuser</string>
         </property>
        </widget>
-       <widget class="QRadioButton" name="radioButton_8">
+       <widget class="QRadioButton" name="radioButton_5">
         <property name="geometry">
          <rect>
           <x>120</x>
@@ -578,7 +578,7 @@
          <string>Controller</string>
         </property>
        </widget>
-       <widget class="QRadioButton" name="radioButton_9">
+       <widget class="QRadioButton" name="radioButton_6">
         <property name="geometry">
          <rect>
           <x>216</x>
@@ -696,7 +696,7 @@
         <double>0.100000000000000</double>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_13">
+      <widget class="QPushButton" name="pushButton_7">
        <property name="geometry">
         <rect>
          <x>360</x>
@@ -709,7 +709,7 @@
         <string>Set</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_14">
+      <widget class="QPushButton" name="pushButton_8">
        <property name="geometry">
         <rect>
          <x>360</x>
@@ -722,7 +722,7 @@
         <string>Set</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_15">
+      <widget class="QPushButton" name="pushButton_9">
        <property name="geometry">
         <rect>
          <x>360</x>
@@ -735,7 +735,7 @@
         <string>Set</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_16">
+      <widget class="QPushButton" name="pushButton_10">
        <property name="geometry">
         <rect>
          <x>360</x>
@@ -748,7 +748,10 @@
         <string>Set</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_17">
+      <widget class="QPushButton" name="pushButton_11">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="geometry">
         <rect>
          <x>360</x>
@@ -759,6 +762,12 @@
        </property>
        <property name="text">
         <string>Set</string>
+       </property>
+       <property name="default">
+        <bool>false</bool>
+       </property>
+       <property name="flat">
+        <bool>false</bool>
        </property>
       </widget>
       <widget class="Line" name="line">
@@ -841,7 +850,7 @@
         <number>100</number>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_12">
+      <widget class="QPushButton" name="pushButton_5">
        <property name="geometry">
         <rect>
          <x>240</x>
@@ -866,7 +875,7 @@
        <property name="title">
         <string>Ambient  sensor</string>
        </property>
-       <widget class="QRadioButton" name="radioButton_10">
+       <widget class="QRadioButton" name="radioButton_7">
         <property name="geometry">
          <rect>
           <x>32</x>
@@ -879,7 +888,7 @@
          <string>Focuser</string>
         </property>
        </widget>
-       <widget class="QRadioButton" name="radioButton_11">
+       <widget class="QRadioButton" name="radioButton_8">
         <property name="geometry">
          <rect>
           <x>144</x>
@@ -935,7 +944,7 @@
         <string>Auto Dew enabled</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton_18">
+      <widget class="QPushButton" name="pushButton_6">
        <property name="geometry">
         <rect>
          <x>240</x>
