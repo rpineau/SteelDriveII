@@ -190,7 +190,8 @@ int	X2Focuser::execModalSettingsDialog(void)
 	bool bTmp;
     int nTmp;
 	double dTmp;
-
+    float fTmp;
+    
     char szTmp[LOG_BUFFER_SIZE];
 
     if (NULL == ui)
@@ -273,7 +274,7 @@ int	X2Focuser::execModalSettingsDialog(void)
 
 		m_SteelDriveII.getPWM(nTmp);
 		dx->setPropertyInt("PwmOutputPercent", "value", nTmp);
-
+        
         m_SteelDriveII.getPIDSensorSource(nTmp);
         switch(nTmp) {
             case FOCUSER :
@@ -290,23 +291,33 @@ int	X2Focuser::execModalSettingsDialog(void)
                 break;
         }
         
-		m_SteelDriveII.getTempAmbienSensorSource(nTmp);
-		switch(nTmp) {
-			case FOCUSER :
-				dx->setChecked(SET_DEW_TEMP_SOURCE_FOC, 1);
-				break;
-			case CONTROLLER :
-				dx->setChecked(SET_DEW_TEMP_SOURCE_CTRL, 1);
-				break;
-			default:
-				dx->setChecked(SET_DEW_TEMP_SOURCE_FOC, 1);
-				break;
-		}
-		m_SteelDriveII.getPidDewTemperatureOffset(dTmp);
-		dx->setPropertyDouble("pidDewOffset", "value", dTmp);
-
-		m_SteelDriveII.isAutoDewEnable(bTmp);
-		dx->setChecked(ENABLE_AUTO_DEW_COMP, bTmp?1:0);
+        m_SteelDriveII.getFirmwareVersion(fTmp);
+        if(fTmp >= 0.732f) {
+            m_SteelDriveII.getTempAmbienSensorSource(nTmp);
+            switch(nTmp) {
+                case FOCUSER :
+                    dx->setChecked(SET_DEW_TEMP_SOURCE_FOC, 1);
+                    break;
+                case CONTROLLER :
+                    dx->setChecked(SET_DEW_TEMP_SOURCE_CTRL, 1);
+                    break;
+                default:
+                    dx->setChecked(SET_DEW_TEMP_SOURCE_FOC, 1);
+                    break;
+            }
+            m_SteelDriveII.getPidDewTemperatureOffset(dTmp);
+            dx->setPropertyDouble("pidDewOffset", "value", dTmp);
+            
+            m_SteelDriveII.isAutoDewEnable(bTmp);
+            dx->setChecked(ENABLE_AUTO_DEW_COMP, bTmp?1:0);
+        }
+        else {
+            dx->setEnabled(SET_DEW_TEMP_SOURCE_FOC, false);
+            dx->setEnabled(SET_DEW_TEMP_SOURCE_CTRL, false);
+            dx->setEnabled(SET_DEW_TEMP_OFFSET, false);
+            dx->setEnabled(ENABLE_AUTO_DEW_COMP, false);
+            dx->setEnabled("pidDewOffset", false);
+        }
     }
     else {
         // disable unsued controls when not connected

@@ -24,7 +24,8 @@ CSteelDriveII::CSteelDriveII()
     m_SteelDriveInfo.sName = "";
     m_SteelDriveInfo.nPos = 0;
     m_SteelDriveInfo.nLimit = 0;
-
+    m_fFirmware = 0.0;
+    
 	strncpy(m_szFirmwareVersion,"Not Available", SERIAL_BUFFER_SIZE);
     
     m_bAbborted = false;
@@ -258,6 +259,7 @@ int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
     int nErr = BS_OK;
 	std::string sResp;
     std::vector<std::string> svField;
+    std::vector<std::string> svFirmwareFields;
 
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
@@ -265,9 +267,17 @@ int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
     memset(pszVersion, 0, nStrMaxLen);
     
     nErr = SteelDriveIICommand("$BS GET VERSION", sResp);
-    if(nErr)
-        return nErr;
-
+    if(nErr) {
+        snprintf(pszVersion, nStrMaxLen, "Unknown");
+        m_fFirmware = 0.0;
+        return BS_OK;
+    }
+    if(sResp.find("ERROR") != -1) {
+        snprintf(pszVersion, nStrMaxLen, "Unknown");
+        m_fFirmware = 0.0;
+        return BS_OK;
+    }
+    
     if(sResp.size()) {
         nErr = parseFields(sResp, svField, ':');
         if(nErr)
@@ -275,6 +285,11 @@ int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
         if(svField.size()>1) {
             strncpy(m_szFirmwareVersion, svField[1].c_str(), SERIAL_BUFFER_SIZE);
             strncpy(pszVersion, m_szFirmwareVersion, nStrMaxLen);
+            parseFields(svField[1], svFirmwareFields, '(');
+            if(svFirmwareFields.size()) {
+                m_fFirmware = std::stof(svFirmwareFields[0]);
+            }
+            
         }
         
 #if defined BS_DEBUG && BS_DEBUG >= 2
@@ -285,6 +300,18 @@ int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
         fflush(Logfile);
 #endif
     }
+    return nErr;
+}
+
+int CSteelDriveII::getFirmwareVersion(float &fVersion)
+{
+    int nErr = BS_OK;
+    char dummy[SERIAL_BUFFER_SIZE];
+    fVersion = 0.0;
+    nErr = getFirmwareVersion(dummy, SERIAL_BUFFER_SIZE);
+    if(nErr)
+        return nErr;
+    fVersion = m_fFirmware;
     return nErr;
 }
 

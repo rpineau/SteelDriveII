@@ -108,6 +108,8 @@ public:
     void	setDebugLog(bool bEnable) {m_bDebugLog = bEnable; };
 
     int		getFirmwareVersion(char *pszVersion, int nStrMaxLen);
+    int     getFirmwareVersion(float &fVersion);
+    
     int		getDeviceName(char *pzName, int nStrMaxLen);
 
     int		getPosition(int &nPosition);
@@ -205,6 +207,7 @@ protected:
     bool            m_bDebugLog;
     bool            m_bIsConnected;
     char            m_szFirmwareVersion[SERIAL_BUFFER_SIZE];
+    float           m_fFirmware;
     char            m_szLogBuffer[LOG_BUFFER_SIZE];
 
     int             m_nTargetPos;
