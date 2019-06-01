@@ -1804,7 +1804,7 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] Sending '%s'\n", timestamp, sCmd.c_str());
+	fprintf(Logfile, "[%s] [CSteelDriveII::SteelDriveIICommand] Sending '%s'", timestamp, sCmd.c_str());
 	fflush(Logfile);
 #endif
 
