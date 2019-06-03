@@ -215,7 +215,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>Initate Zeroing</string>
+        <string>Initiate Zeroing</string>
        </property>
       </widget>
       <widget class="QCheckBox" name="checkBox">
@@ -412,7 +412,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>Focuser termperature (ºC) :</string>
+        <string>Focuser temperature (ºC) :</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -428,7 +428,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>Focuser termperature offset (ºC) :</string>
+        <string>Focuser temperature offset (ºC) :</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -444,7 +444,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>Controller termperature (ºC) :</string>
+        <string>Controller temperature (ºC) :</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -460,7 +460,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>Controller termperature offset (ºC) :</string>
+        <string>Controller temperature offset (ºC) :</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
