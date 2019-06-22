@@ -107,10 +107,10 @@ public:
     // getter and setter
     void	setDebugLog(bool bEnable) {m_bDebugLog = bEnable; };
 
-    int		getFirmwareVersion(char *pszVersion, int nStrMaxLen);
+	int		getFirmwareVersion(std::string &sVersion);
     int     getFirmwareVersion(float &fVersion);
     
-    int		getDeviceName(char *pzName, int nStrMaxLen);
+    int		getDeviceName(std::string &sName);
 
     int		getPosition(int &nPosition);
 	int		setPosition(const int &nPosition);
@@ -185,9 +185,7 @@ protected:
 
 	int				SteelDriveIICommand(std::string sCmd, std::string &sResult);
 	
-    // int				readResponse(char *pszRespBuffer, int nBufferLen);
 	int				readResponse(std::string &RespBuffer);
-    int				parseFields(const char *pszIn, std::vector<std::string> &svFields, char cSeparator);
     int				parseFields(std::string sIn, std::vector<std::string> &svFields, char cSeparator);
     std::string&	trim(std::string &str, const std::string &filter );
     std::string&	ltrim(std::string &str, const std::string &filter);
@@ -206,7 +204,7 @@ protected:
 	bool			m_bCrcEnabled;
     bool            m_bDebugLog;
     bool            m_bIsConnected;
-    char            m_szFirmwareVersion[SERIAL_BUFFER_SIZE];
+	std::string     m_sFirmwareVersion;
     float           m_fFirmware;
     char            m_szLogBuffer[LOG_BUFFER_SIZE];
 

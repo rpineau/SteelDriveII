@@ -25,9 +25,7 @@ CSteelDriveII::CSteelDriveII()
     m_SteelDriveInfo.nPos = 0;
     m_SteelDriveInfo.nLimit = 0;
     m_fFirmware = 0.0;
-    
-	strncpy(m_szFirmwareVersion,"Not Available", SERIAL_BUFFER_SIZE);
-    
+
     m_bAbborted = false;
     m_pSerx = NULL;
 
@@ -122,7 +120,7 @@ int CSteelDriveII::Connect(const char *pszPort)
     else
         disableCRC();
 
-    nErr = getFirmwareVersion(m_szFirmwareVersion, SERIAL_BUFFER_SIZE);
+	nErr = getFirmwareVersion(m_sFirmwareVersion);
     nErr |= getInfo();
     if(nErr)
         nErr = ERR_COMMNOLINK;
@@ -254,7 +252,7 @@ int CSteelDriveII::isGoToComplete(bool &bComplete)
 
 
 #pragma mark - device info
-int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
+int CSteelDriveII::getFirmwareVersion(std::string &sVersion)
 {
     int nErr = BS_OK;
 	std::string sResp;
@@ -264,16 +262,14 @@ int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-    memset(pszVersion, 0, nStrMaxLen);
-    
     nErr = SteelDriveIICommand("$BS GET VERSION", sResp);
     if(nErr) {
-        snprintf(pszVersion, nStrMaxLen, "Unknown");
+		sVersion.assign("Unknown");
         m_fFirmware = 0.0;
         return BS_OK;
     }
     if(sResp.find("ERROR") != -1) {
-        snprintf(pszVersion, nStrMaxLen, "Unknown");
+		sVersion.assign("Unknown");
         m_fFirmware = 0.0;
         return BS_OK;
     }
@@ -283,8 +279,7 @@ int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
         if(nErr)
             return nErr;
         if(svField.size()>1) {
-            strncpy(m_szFirmwareVersion, svField[1].c_str(), SERIAL_BUFFER_SIZE);
-            strncpy(pszVersion, m_szFirmwareVersion, nStrMaxLen);
+			sVersion.assign(svField[1]);
             parseFields(svField[1], svFirmwareFields, '(');
             if(svFirmwareFields.size()) {
                 m_fFirmware = std::stof(svFirmwareFields[0]);
@@ -296,7 +291,7 @@ int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(Logfile, "[%s] [CSteelDriveII::getFirmwareVersion] pszVersion = '%s'\n", timestamp, pszVersion);
+        fprintf(Logfile, "[%s] [CSteelDriveII::getFirmwareVersion] pszVersion = '%s'\n", timestamp, sVersion.c_str());
         fflush(Logfile);
 #endif
     }
@@ -306,9 +301,10 @@ int CSteelDriveII::getFirmwareVersion(char *pszVersion, int nStrMaxLen)
 int CSteelDriveII::getFirmwareVersion(float &fVersion)
 {
     int nErr = BS_OK;
-    char dummy[SERIAL_BUFFER_SIZE];
+	std::string sVersion;
     fVersion = 0.0;
-    nErr = getFirmwareVersion(dummy, SERIAL_BUFFER_SIZE);
+
+	nErr = getFirmwareVersion(sVersion);
     if(nErr)
         return nErr;
     fVersion = m_fFirmware;
@@ -452,7 +448,7 @@ int CSteelDriveII::getSummary()
 
 }
 
-int CSteelDriveII::getDeviceName(char *pzName, int nStrMaxLen)
+int CSteelDriveII::getDeviceName(std::string &sName)
 {
     int nErr = BS_OK;
 	std::string sResp;
@@ -490,7 +486,7 @@ int CSteelDriveII::getDeviceName(char *pzName, int nStrMaxLen)
             if(nErr)
                 return nErr;
         if(vNameField.size()>1) {
-            strncpy(pzName, vNameField[1].c_str(), nStrMaxLen);
+			sName.assign(vNameField[1]);
             m_SteelDriveInfo.sName = vNameField[1];
         }
 
@@ -498,7 +494,7 @@ int CSteelDriveII::getDeviceName(char *pzName, int nStrMaxLen)
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(Logfile, "[%s] [CSteelDriveII::getDeviceName] pzName = '%s'\n", timestamp, pzName);
+        fprintf(Logfile, "[%s] [CSteelDriveII::getDeviceName] pzName = '%s'\n", timestamp, sName.c_str());
         fflush(Logfile);
 #endif
     }
@@ -1973,17 +1969,6 @@ int CSteelDriveII::readResponse(std::string &RespBuffer)
     } while (*pszBufPtr++ != '\n' && ulTotalBytesRead < SERIAL_BUFFER_SIZE );
 
 	RespBuffer.assign(pszRespBuffer);
-    return nErr;
-}
-
-
-int CSteelDriveII::parseFields(const char *pszIn, std::vector<std::string> &svFields, char cSeparator)
-{
-    int nErr = BS_OK;
-    std::string sIn(pszIn);
-    
-    nErr = parseFields(sIn, svFields, cSeparator);
-    
     return nErr;
 }
 

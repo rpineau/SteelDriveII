@@ -102,9 +102,9 @@ void X2Focuser::deviceInfoNameShort(BasicStringInterface& str) const
     else {
         X2Focuser* pMe = (X2Focuser*)this;
         X2MutexLocker ml(pMe->GetMutex());
-        char cName[SERIAL_BUFFER_SIZE];
-        pMe->m_SteelDriveII.getDeviceName(cName, SERIAL_BUFFER_SIZE);
-        str = cName;
+		std::string sName;
+        pMe->m_SteelDriveII.getDeviceName(sName);
+        str = sName.c_str();
     }
 }
 
@@ -127,9 +127,9 @@ void X2Focuser::deviceInfoFirmwareVersion(BasicStringInterface& str)
     else {
     // get firmware version
         X2MutexLocker ml(GetMutex());
-        char cFirmware[SERIAL_BUFFER_SIZE];
-        m_SteelDriveII.getFirmwareVersion(cFirmware, SERIAL_BUFFER_SIZE);
-        str = cFirmware;
+		std::string sFirmware;
+        m_SteelDriveII.getFirmwareVersion(sFirmware);
+        str = sFirmware.c_str();
     }
 }
 
