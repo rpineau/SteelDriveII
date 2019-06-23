@@ -25,7 +25,7 @@
 
 #include "StopWatch.h"
 
-#define BS_DEBUG 3
+// #define BS_DEBUG 3
 
 #define MAX_TIMEOUT 1000
 #define SERIAL_BUFFER_SIZE 256
