@@ -1829,7 +1829,7 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 	if(m_bCrcEnabled) {
 		//compute and add CRC
 		std::stringstream ss;
-		ss << std::hex << +crc8((uint8_t *)sCmd.c_str(), sCmd.size());
+		ss << std::hex << +crc8((uint8_t *)sCmd.c_str(), (uint8_t)sCmd.size());
 		sCmd += "*" + ss.str();
 	}
 
@@ -1897,7 +1897,7 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
 		if(nErr)
 			return nErr;
 		if(svField.size()>1) {
-			nRespCRC = crc8((uint8_t *)svField[0].c_str(), svField[0].size());
+			nRespCRC = crc8((uint8_t *)svField[0].c_str(), (uint8_t)svField[0].size());
 #if defined BS_DEBUG && BS_DEBUG >= 2
 			ltime = time(NULL);
 			timestamp = asctime(localtime(&ltime));

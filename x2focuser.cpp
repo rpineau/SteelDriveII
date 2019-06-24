@@ -466,8 +466,8 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	}
 
 	else if	(!strcmp(pszEvent, SET_TEMP_COMP_PERIOD_CLICKED)) {
-		uiex->propertyDouble("compPeriod", "value", dTmp);
-		nErr = m_SteelDriveII.setTempCompPeriod(dTmp);
+		uiex->propertyInt("compPeriod", "value", nTmp);
+		nErr = m_SteelDriveII.setTempCompPeriod(nTmp);
 		if(nErr) {
 			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the temperature comp Period : %d", nErr);
 			uiex->messageBox("Error", szTmp);

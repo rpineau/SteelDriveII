@@ -42,7 +42,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 ; WIll also need to customise these!
-Source: "focuserlist PrimaLuceLab.txt"; DestDir: "{app}\Miscellaneous Files"; Flags: ignoreversion
+Source: "focuserlist SteelDriveII.txt"; DestDir: "{app}\Miscellaneous Files"; Flags: ignoreversion
 Source: "libSteeldriveII\Release\libSteeldriveII.dll"; DestDir: "{app}\Plugins\FocuserPlugins"; Flags: ignoreversion
 Source: "SteeldriveII.ui"; DestDir: "{app}\Plugins\FocuserPlugins"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
