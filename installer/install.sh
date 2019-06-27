@@ -32,13 +32,13 @@ else
 	PLUGINS_DIR="PlugIns"
 fi
 
-cp "./focuserlist PrimaLuceLab.txt" "$TheSkyX_Path/Resources/Common/Miscellaneous Files/"
+cp "./focuserlist SteelDriveII.txt" "$TheSkyX_Path/Resources/Common/Miscellaneous Files/"
 cp "./SteelDriveII.ui" "$TheSkyX_Path/Resources/Common/$PLUGINS_DIR/FocuserPlugIns/"
 cp "./libSteelDriveII.so" "$TheSkyX_Path/Resources/Common/$PLUGINS_DIR/FocuserPlugIns/"
 
 app_owner=`/usr/bin/stat -c "%u" "$TheSkyX_Path" | xargs id -n -u`
 if [ ! -z "$app_owner" ]; then
-	chown $app_owner "$TheSkyX_Path/Resources/Common/Miscellaneous Files/focuserlist PrimaLuceLab.txt"
+	chown $app_owner "$TheSkyX_Path/Resources/Common/Miscellaneous Files/focuserlist SteelDriveII.txt"
 	chown $app_owner "$TheSkyX_Path/Resources/Common/$PLUGINS_DIR/FocuserPlugIns/SteelDriveII.ui"
 	chown $app_owner "$TheSkyX_Path/Resources/Common/$PLUGINS_DIR/FocuserPlugIns/libSteelDriveII.so"
 fi
