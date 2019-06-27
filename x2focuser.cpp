@@ -250,7 +250,7 @@ int	X2Focuser::execModalSettingsDialog(void)
 		m_SteelDriveII.getTempCompPeriod(nTmp);
 		dx->setPropertyInt("compPeriod", "value", nTmp);
 
-		m_SteelDriveII.getTempCompFactor(dTmp);
+		m_SteelDriveII.getTempCompDelta(dTmp);
 		dx->setPropertyDouble("compThreshold", "value", dTmp);
 
 		m_SteelDriveII.getTemperature(FOCUSER, dTmp);
@@ -267,8 +267,9 @@ int	X2Focuser::execModalSettingsDialog(void)
 
 		m_SteelDriveII.getPIDControl(bTmp);
 		dx->setChecked(ENABLE_TEMP_PID_COMP, bTmp?1:0);
+        dx->setEnabled("PidTempTarget", !bTmp);
 
-		m_SteelDriveII.getPIDTarget(dTmp);
+        m_SteelDriveII.getPIDTarget(dTmp);
 		dx->setPropertyDouble("PidTempTarget", "value", dTmp);
 
 		m_SteelDriveII.getPWM(nTmp);
@@ -476,7 +477,7 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 
 	else if	(!strcmp(pszEvent, SET_TEMP_COMP_DELTA_CLICKED)) {
 		uiex->propertyDouble("compThreshold", "value", dTmp);
-		nErr = m_SteelDriveII.setTempCompFactor(dTmp);
+		nErr = m_SteelDriveII.setTempCompDelta(dTmp);
 		if(nErr) {
 			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the temperature comp Factor (delta) : %d", nErr);
 			uiex->messageBox("Error", szTmp);
@@ -487,26 +488,33 @@ void X2Focuser::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 		uiex->propertyDouble("focTempOffset", "value", dTmp);
 		nErr = m_SteelDriveII.setTemperatureOffsetForSource(FOCUSER, dTmp);
 		if(nErr) {
-			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the temperature focuser offset) : %d", nErr);
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the temperature focuser offset : %d", nErr);
 			uiex->messageBox("Error", szTmp);
 		}
 	}
 
 	else if	(!strcmp(pszEvent, SET_CTRL_TEMP_OFFSET_CLICKED)) {
-		uiex->propertyDouble("focTempOffset", "value", dTmp);
+		uiex->propertyDouble("controllerTempOffset", "value", dTmp);
 		nErr = m_SteelDriveII.setTemperatureOffsetForSource(CONTROLLER, dTmp);
 		if(nErr) {
-			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the temperature controller offset) : %d", nErr);
+			snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting the temperature controller offset : %d", nErr);
 			uiex->messageBox("Error", szTmp);
 		}
 	}
 
 	else if	(!strcmp(pszEvent, ENABLE_TEMP_PID_COMP_CLICKED)) {
+        uiex->propertyDouble("PidTempTarget", "value", dTmp);
+        nErr = m_SteelDriveII.setPIDTarget(dTmp);
+        if(nErr) {
+            snprintf(szTmp, LOG_BUFFER_SIZE, "Error setting PID temperature target : %d", nErr);
+            uiex->messageBox("Error", szTmp);
+        }
 		nErr = m_SteelDriveII.setPIDControl(uiex->isChecked(ENABLE_TEMP_PID_COMP)==1?true:false);
 		if(nErr) {
 			snprintf(szTmp, LOG_BUFFER_SIZE, "Error %s PID temperature compensation : %d", uiex->isChecked(ENABLE_TEMP_COMP)==1?"enabling":"disabling", nErr);
 			uiex->messageBox("Error", szTmp);
 		}
+        uiex->setEnabled("PidTempTarget", uiex->isChecked(ENABLE_TEMP_PID_COMP)==1?false:true); // disable the field if PID control enabled
 	}
 
 	else if	(!strcmp(pszEvent, SET_PID_TEMP_SOURCE_FOC_CLICKED)) {

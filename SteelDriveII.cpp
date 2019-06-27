@@ -1080,7 +1080,7 @@ int CSteelDriveII::enableTempComp(const bool &bEnable)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	sCmd = "$BS SET TCOMP:%" + std::to_string(bEnable?1:0);
+	sCmd = "$BS SET TCOMP:" + std::to_string(bEnable?1:0);
 	nErr = SteelDriveIICommand(sCmd, sResp);
 	if(nErr)
 		return nErr;
@@ -1336,6 +1336,66 @@ int CSteelDriveII::getTempCompFactor(double &dFactor)
     return nErr;
 }
 
+int CSteelDriveII::setTempCompDelta(const double &dDelta)
+{
+    int nErr = BS_OK;
+    std::string sResp;
+    std::string sCmd;
+    std::ostringstream floatFormater;
+    
+    if(!m_bIsConnected)
+        return ERR_COMMNOLINK;
+    
+    floatFormater << std::setprecision(2) << dDelta;
+    sCmd = "$BS SET TCOMP_DELTA:" + floatFormater.str();
+    
+    nErr = SteelDriveIICommand(sCmd, sResp);
+    if(nErr)
+        return nErr;
+    
+    if(sResp.find("ERROR") != -1)
+        return ERR_CMDFAILED;
+    
+    return nErr;
+}
+
+int CSteelDriveII::getTempCompDelta(double &dDelta)
+{
+    int nErr = SB_OK;
+    
+    std::string sResp;
+    std::vector<std::string> vFieldsData;
+    std::vector<std::string> vNameField;
+    
+    if(!m_bIsConnected)
+        return ERR_COMMNOLINK;
+    
+    // 0 = focuser, 1 = controller
+    nErr = SteelDriveIICommand("$BS GET TCOMP_DELTA", sResp);
+    if(nErr)
+        return nErr;
+    
+    if(sResp.find("ERROR") != -1)
+        return ERR_CMDFAILED;
+    
+    if(sResp.size()) { // sometimes we don't get the reply but "\r" with no data
+        nErr = parseFields(sResp, vFieldsData, ':');
+        if(nErr)
+            return nErr;
+        if(vFieldsData.size()>1) { // temp is in 2nd field
+            dDelta = std::stof(vFieldsData[1]);
+        }
+    }
+#if defined BS_DEBUG && BS_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CSteelDriveII::getTempCompDelta] temp comp delta = %3.2f\n", timestamp, dDelta);
+    fflush(Logfile);
+#endif
+    
+    return nErr;
+}
 
 
 int CSteelDriveII::getTemperatureOffsetFromSource(int nSource, double &dTemperatureOffset)
@@ -1407,7 +1467,7 @@ int CSteelDriveII::setTemperatureOffsetForSource(int nSource, double &dTemperatu
 }
 
 
-int CSteelDriveII::getPIDControl(bool bIsEnabled)
+int CSteelDriveII::getPIDControl(bool &bIsEnabled)
 {
 	int nErr = BS_OK;
 	std::string sResp;
@@ -1443,7 +1503,7 @@ int CSteelDriveII::getPIDControl(bool bIsEnabled)
 	return nErr;
 }
 
-int CSteelDriveII::setPIDControl(const bool bEnable)
+int CSteelDriveII::setPIDControl(const bool &bEnable)
 {
 	int nErr = BS_OK;
 	std::string sResp;
@@ -1452,7 +1512,7 @@ int CSteelDriveII::setPIDControl(const bool bEnable)
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
 
-	sCmd = "$BS SET PID_CTRL:%s" + std::to_string(bEnable?1:0);
+	sCmd = "$BS SET PID_CTRL:" + std::to_string(bEnable?1:0);
 	nErr = SteelDriveIICommand(sCmd, sResp);
 	if(nErr)
 		return nErr;

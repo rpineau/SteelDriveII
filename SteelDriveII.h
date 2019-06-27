@@ -157,11 +157,14 @@ public:
     int     getTempCompFactor(double &dFactor);
     int     setTempCompFactor(const double &dFactor);
 
+    int     getTempCompDelta(double &dDelta);
+    int     setTempCompDelta(const double &dDelta);
+    
 	int		getTemperatureOffsetFromSource(int nSource, double &dTemperatureOffset);
 	int		setTemperatureOffsetForSource(int nSource, double &dTemperatureOffset);
 
-	int		getPIDControl(bool bIsEnabled);
-	int		setPIDControl(const bool bEnable);
+	int		getPIDControl(bool &bIsEnabled);
+	int		setPIDControl(const bool &bEnable);
 
 	int     getPIDTarget(double &dTarget);
 	int     setPIDTarget(const double &dTarget);
