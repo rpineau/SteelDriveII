@@ -40,13 +40,21 @@ DirExistsWarning=no
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+[Dirs]
+Name: "{app}\Plugins\FocuserPlugins";
+Name: "{app}\Plugins64\FocuserPlugins";
+
 [Files]
 ; WIll also need to customise these!
-Source: "focuserlist SteelDriveII.txt"; DestDir: "{app}\Miscellaneous Files"; Flags: ignoreversion
-Source: "libSteeldriveII\Release\libSteeldriveII.dll"; DestDir: "{app}\Plugins\FocuserPlugins"; Flags: ignoreversion
-Source: "SteeldriveII.ui"; DestDir: "{app}\Plugins\FocuserPlugins"; Flags: ignoreversion
-; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-; msgBox('Do you want to install MyProg.exe to ' + ExtractFilePath(CurrentFileName) + '?', mbConfirmation, MB_YESNO)
+Source: "focuserlist SteelDriveII.txt";                         DestDir: "{app}\Miscellaneous Files"; Flags: ignoreversion
+Source: "focuserlist SteelDriveII.txt";                         DestDir: "{app}\Miscellaneous Files"; DestName: "focuserlist64 SteelDriveII.txt"; Flags: ignoreversion
+; 32 bit
+Source: "libSteeldriveII\\Win32\Release\libSteeldriveII.dll";   DestDir: "{app}\Plugins\FocuserPlugins"; Flags: ignoreversion
+Source: "SteeldriveII.ui";                                      DestDir: "{app}\Plugins\FocuserPlugins"; Flags: ignoreversion
+; 64 bit
+Source: "libSteeldriveII\x64\Release\libSteeldriveII.dll";      DestDir: "{app}\Plugins64\FocuserPlugins"; Flags: ignoreversion; Check: DirExists(ExpandConstant('{app}\Plugins64\FocuserPlugins'))
+Source: "SteeldriveII.ui";                                      DestDir: "{app}\Plugins64\FocuserPlugins"; Flags: ignoreversion; Check: DirExists(ExpandConstant('{app}\Plugins64\FocuserPlugins'))
+
 
 [Code]
 {* Below is a function to read TheSkyXInstallPath.txt and confirm that the directory does exist
