@@ -21,9 +21,9 @@
 // temperature settings UI
 #pragma mark - temperature settings UI
 #define ENABLE_TEMP_COMP		"checkBox_2"
-#define SET_TEMP_SOURCE_FOC		"radioButton"
-#define SET_TEMP_SOURCE_CTRL	"radioButton_2"
-#define SET_TEMP_SOURCE_BOTH	"radioButton_3"
+#define SET_TEMP_COMP_SOURCE_FOC    "radioButton"
+#define SET_TEMP_COMP_SOURCE_CTRL	"radioButton_2"
+#define SET_TEMP_COMP_SOURCE_BOTH	"radioButton_3"
 #define PAUSE_TEMP_COMP			"checkBox_3"
 
 #define SET_TEMP_COMP_FACTOR	"pushButton_6"

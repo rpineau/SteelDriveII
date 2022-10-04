@@ -27,6 +27,7 @@ X2Focuser::X2Focuser(const char* pszDisplayName,
 
     // Read in settings
     if (m_pIniUtil) {
+        m_nTempSource = m_pIniUtil->readInt(PARENT_KEY, CHILD_TEMP_SOURCE, 0);
     }
 	m_SteelDriveII.SetSerxPointer(m_pSerX);
     m_SteelDriveII.SetSleeperPointer(m_pSleeper);
@@ -91,7 +92,7 @@ void X2Focuser::driverInfoDetailedInfo(BasicStringInterface& str) const
 
 double X2Focuser::driverInfoVersion(void) const
 {
-	return DRIVER_VERSION;
+	return PLUGIN_VERSION;
 }
 
 void X2Focuser::deviceInfoNameShort(BasicStringInterface& str) const
@@ -153,6 +154,8 @@ int	X2Focuser::establishLink(void)
     else
         m_bLinked = true;
 
+    if(m_bLinked)
+        m_SteelDriveII.setTempAmbienSensorSource(m_nTempSource);
 
     return nErr;
 }
@@ -228,16 +231,16 @@ int	X2Focuser::execModalSettingsDialog(void)
 		m_SteelDriveII.getTempCompSensorSource(nTmp);
 		switch(nTmp) {
 			case FOCUSER :
-				dx->setChecked(SET_TEMP_SOURCE_FOC, 1);
+				dx->setChecked(SET_TEMP_COMP_SOURCE_FOC, 1);
 				break;
 			case CONTROLLER :
-				dx->setChecked(SET_TEMP_SOURCE_CTRL, 1);
+				dx->setChecked(SET_TEMP_COMP_SOURCE_CTRL, 1);
 				break;
 			case BOTH :
-				dx->setChecked(SET_TEMP_SOURCE_BOTH, 1);
+				dx->setChecked(SET_TEMP_COMP_SOURCE_BOTH, 1);
 				break;
 			default:
-				dx->setChecked(SET_TEMP_SOURCE_FOC, 1);
+				dx->setChecked(SET_TEMP_COMP_SOURCE_FOC, 1);
 				break;
 		}
 
@@ -348,6 +351,14 @@ int	X2Focuser::execModalSettingsDialog(void)
 
     //Retreive values from the user interface
     if (bPressedOK) {
+        if(dx->isChecked(SET_DEW_TEMP_SOURCE_FOC)) {
+            m_nTempSource = FOCUSER;
+        }
+        else if(dx->isChecked(SET_DEW_TEMP_SOURCE_CTRL)) {
+            m_nTempSource = CONTROLLER;
+        }
+        m_pIniUtil->writeInt(PARENT_KEY, CHILD_TEMP_SOURCE, m_nTempSource);
+        m_SteelDriveII.setTempAmbienSensorSource(m_nTempSource);
     }
     return nErr;
 }
@@ -596,9 +607,9 @@ void X2Focuser::setMainDialogControlState(X2GUIExchangeInterface* uiex, bool ena
 	uiex->setEnabled(USE_END_STOP, enabled);
 
 	uiex->setEnabled(ENABLE_TEMP_COMP, enabled);
-	uiex->setEnabled(SET_TEMP_SOURCE_FOC, enabled);
-	uiex->setEnabled(SET_TEMP_SOURCE_CTRL, enabled);
-	uiex->setEnabled(SET_TEMP_SOURCE_BOTH, enabled);
+	uiex->setEnabled(SET_TEMP_COMP_SOURCE_FOC, enabled);
+	uiex->setEnabled(SET_TEMP_COMP_SOURCE_CTRL, enabled);
+	uiex->setEnabled(SET_TEMP_COMP_SOURCE_BOTH, enabled);
 	uiex->setEnabled(PAUSE_TEMP_COMP, enabled);
 	uiex->setEnabled(SET_TEMP_COMP_FACTOR, enabled);
 	uiex->setEnabled(SET_TEMP_COMP_PERIOD, enabled);
@@ -764,7 +775,7 @@ int X2Focuser::focTemperature(double &dTemperature)
     // this prevent us from asking the temperature too often
     static CStopWatch timer;
 
-    if(timer.GetElapsedSeconds() > 30.0f || m_fLastTemp < -99.0f) {
+    if(timer.GetElapsedSeconds() > 10.0f || m_fLastTemp < -99.0f) {
         X2MutexLocker ml(GetMutex());
         nErr = m_SteelDriveII.getTemperature(m_nTempSource, m_fLastTemp);
         timer.Reset();

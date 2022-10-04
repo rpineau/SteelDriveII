@@ -35,10 +35,9 @@ class MutexInterface;
 class BasicIniUtilInterface;
 class TickCountInterface;
 
-#define DRIVER_VERSION      1.0
-
 #define PARENT_KEY			"SteelDriveII"
 #define CHILD_KEY_PORTNAME	"PortName"
+#define CHILD_TEMP_SOURCE    "TempSource"
 
 #if defined(SB_WIN_BUILD)
 #define DEF_PORT_NAME					"COM1"

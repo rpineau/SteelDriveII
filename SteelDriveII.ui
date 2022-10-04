@@ -878,7 +878,7 @@
        <widget class="QRadioButton" name="radioButton_7">
         <property name="geometry">
          <rect>
-          <x>32</x>
+          <x>40</x>
           <y>24</y>
           <width>96</width>
           <height>24</height>
@@ -891,9 +891,9 @@
        <widget class="QRadioButton" name="radioButton_8">
         <property name="geometry">
          <rect>
-          <x>144</x>
+          <x>152</x>
           <y>24</y>
-          <width>96</width>
+          <width>104</width>
           <height>24</height>
          </rect>
         </property>

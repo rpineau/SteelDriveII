@@ -25,6 +25,8 @@
 
 #include "StopWatch.h"
 
+#define PLUGIN_VERSION 1.1
+
 // #define BS_DEBUG 3
 
 #define MAX_TIMEOUT 1000

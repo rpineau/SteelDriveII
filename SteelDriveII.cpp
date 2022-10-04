@@ -19,6 +19,9 @@
 
 CSteelDriveII::CSteelDriveII()
 {
+    m_bIsConnected =false;
+    m_pSerx = nullptr;
+
 	m_bCrcEnabled = false;
 	m_nTargetPos = 0;
     m_SteelDriveInfo.sName = "";
@@ -1883,6 +1886,9 @@ int CSteelDriveII::SteelDriveIICommand(std::string sCmd, std::string &sResult)
     
 	if(!m_bIsConnected)
 		return ERR_COMMNOLINK;
+
+    if(!m_pSerx)
+        return ERR_POINTER;
 
 	m_pSerx->purgeTxRx();
 
