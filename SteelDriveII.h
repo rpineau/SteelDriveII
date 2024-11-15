@@ -12,7 +12,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
-
+#include <cstdint>
 #include <exception>
 #include <typeinfo>
 #include <stdexcept>

@@ -167,7 +167,7 @@ private:
 
     void                                    portNameOnToCharPtr(char* pszPort, const int& nMaxSize) const;
 
-    void                                    setMainDialogControlState(X2GUIExchangeInterface* uiex, bool enabeled);
+    void                                    setMainDialogControlState(X2GUIExchangeInterface* uiex, bool enable);
 
 	bool                                    m_bLinked;
 	int                                     m_nPosition;
